@@ -83,6 +83,19 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Remora.Discord.Extensions",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Remora.Discord.Extensions.Tests", "Tests\Remora.Discord.Extensions.Tests\Remora.Discord.Extensions.Tests.csproj", "{9F9B3DFD-891A-4823-9BF7-E58CC52989C5}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Templates", "Templates", "{29B3979F-4C81-4A6A-BC41-6D87522BCF8B}"
+	ProjectSection(SolutionItems) = preProject
+		Templates\Directory.Build.props = Templates\Directory.Build.props
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Remora.Discord.Templates", "Templates\Remora.Discord.Templates.csproj", "{CB0144B1-64EE-4BF4-A6E6-3476983B2EB7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projects", "Projects", "{5C8753BE-E602-4B71-A7E7-7188E42BCED7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Items", "Items", "{4CC5CDB3-F44E-4ECE-8E71-894412500CC5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Remora.Discord.Bot", "Templates\Projects\Remora.Discord.Bot\Remora.Discord.Bot.csproj", "{F6421AF1-0ADA-4B4D-B116-9593CF76BCF1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -181,6 +194,14 @@ Global
 		{9F9B3DFD-891A-4823-9BF7-E58CC52989C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9F9B3DFD-891A-4823-9BF7-E58CC52989C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9F9B3DFD-891A-4823-9BF7-E58CC52989C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CB0144B1-64EE-4BF4-A6E6-3476983B2EB7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CB0144B1-64EE-4BF4-A6E6-3476983B2EB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CB0144B1-64EE-4BF4-A6E6-3476983B2EB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CB0144B1-64EE-4BF4-A6E6-3476983B2EB7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F6421AF1-0ADA-4B4D-B116-9593CF76BCF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6421AF1-0ADA-4B4D-B116-9593CF76BCF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6421AF1-0ADA-4B4D-B116-9593CF76BCF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6421AF1-0ADA-4B4D-B116-9593CF76BCF1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -206,6 +227,10 @@ Global
 		{F3436707-8B8C-4B6B-93E1-A19A5C8F6BBC} = {83B6FEDE-25DF-4996-9B5E-A482D93C3CC7}
 		{D1FBE943-B854-456B-9C3B-C49EAB24AE61} = {D1A34922-E02F-492B-AEF5-9B34E81CE293}
 		{9F9B3DFD-891A-4823-9BF7-E58CC52989C5} = {6E2D59EB-648D-4968-8A63-8D8E3813EC86}
+		{CB0144B1-64EE-4BF4-A6E6-3476983B2EB7} = {29B3979F-4C81-4A6A-BC41-6D87522BCF8B}
+		{5C8753BE-E602-4B71-A7E7-7188E42BCED7} = {29B3979F-4C81-4A6A-BC41-6D87522BCF8B}
+		{4CC5CDB3-F44E-4ECE-8E71-894412500CC5} = {29B3979F-4C81-4A6A-BC41-6D87522BCF8B}
+		{F6421AF1-0ADA-4B4D-B116-9593CF76BCF1} = {5C8753BE-E602-4B71-A7E7-7188E42BCED7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {02545F40-E06C-4956-A77D-02EB2D41A964}

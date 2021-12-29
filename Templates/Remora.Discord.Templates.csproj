@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <PackageType>Template</PackageType>
+        <Version>1.0.0</Version>
+        <Description>
+            $(BaseDescription)
+
+            This package provides project and item templates for use with C# projects.
+        </Description>
+        <PackageReleaseNotes>
+            Initial release.
+        </PackageReleaseNotes>
+        <PackageTags>$(PackageTags);dotnet-new;templates</PackageTags>
+
+        <IncludeContentInPack>true</IncludeContentInPack>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <ContentTargetFolders>content</ContentTargetFolders>
+        <NoWarn>$(NoWarn);NU5128</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Remora.Discord.Commands" Version="16.0.2" PrivateAssets="all" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="Directory.Build.props" InProject="false" />
+        <Content Include="Projects\**\*" Exclude="Projects\**\bin\**;Projects\**\obj\**" LinkBase="templates">
+            <ReplaceParameters>true</ReplaceParameters>
+        </Content>
+        <Content Include="Items\**\*" Exclude="Items\**\bin\**;Items\**\obj\**" LinkBase="templates">
+            <ReplaceParameters>true</ReplaceParameters>
+        </Content>
+        <Compile Remove="Projects\**\*" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,13 @@
+{
+    "$schema": "http://json.schemastore.org/template",
+    "author": "Jarl Gullberg",
+    "classifications": [ "Common", "Code", "Remora", "Discord", "Command" ],
+    "identity": "Remora.Templates.CommandGroup",
+    "name": "Command group",
+    "shortName": "remora-command-group",
+    "sourceName": "RemoraCommandGroup",
+    "tags": {
+        "language": "C#",
+        "type": "item"
+    }
+}

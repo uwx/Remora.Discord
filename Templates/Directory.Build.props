@@ -1,0 +1,11 @@
+<Project>
+    <!-- Import outer build properties -->
+    <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+    <PropertyGroup>
+        <IncludeSymbols>false</IncludeSymbols>
+        <IncludeSource>false</IncludeSource>
+        <EmbedUntrackedSources>false</EmbedUntrackedSources>
+        <EmbedAllSources>false</EmbedAllSources>
+        <NoWarn>SA1633</NoWarn>
+    </PropertyGroup>
+</Project>
