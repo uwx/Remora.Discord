@@ -247,6 +247,11 @@ public enum DiscordError
     UnknownGuildScheduledEventUser = 10071,
 
     /// <summary>
+    /// Unknown tag.
+    /// </summary>
+    UnknownTag = 10087,
+
+    /// <summary>
     /// Bots cannot use this endpoint.
     /// </summary>
     NoBotsAllowed = 20001,
@@ -417,6 +422,16 @@ public enum DiscordError
     MaxNumberOfEditsToMessagesOlderThanOneHourReached = 30046,
 
     /// <summary>
+    /// Maximum number of pinned threads in a forum channel has been reached.
+    /// </summary>
+    MaxNumberOfPinnedThreadsInForumChannelReached = 30047,
+
+    /// <summary>
+    /// Maximum number of tags in a forum channel has been reached.
+    /// </summary>
+    MaxNumberOfTagsInForumChannelReached = 30048,
+
+    /// <summary>
     /// Unauthorized. Provide a valid token and try again.
     /// </summary>
     Unauthorized = 40001,
@@ -470,6 +485,11 @@ public enum DiscordError
     /// The interaction has already been acknowledged by the application.
     /// </summary>
     InteractionHasAlreadyBeenAcknowledged = 40060,
+
+    /// <summary>
+    /// Tag names in a forum channel must be unique.
+    /// </summary>
+    TagNamesMustBeUnique = 40061,
 
     /// <summary>
     /// Missing access.

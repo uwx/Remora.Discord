@@ -60,7 +60,8 @@ public record ThreadCreate
     Optional<IThreadMetadata> ThreadMetadata = default,
     Optional<IThreadMember> Member = default,
     Optional<AutoArchiveDuration> DefaultAutoArchiveDuration = default,
-    Optional<IDiscordPermissionSet> Permissions = default
+    Optional<IDiscordPermissionSet> Permissions = default,
+    Optional<ChannelFlags> Flags = default
 ) : Channel
 (
     ID,
@@ -88,5 +89,6 @@ public record ThreadCreate
     ThreadMetadata,
     Member,
     DefaultAutoArchiveDuration,
-    Permissions
+    Permissions,
+    Flags
 ), IThreadCreate;

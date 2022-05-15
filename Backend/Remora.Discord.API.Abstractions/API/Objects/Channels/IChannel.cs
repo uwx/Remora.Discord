@@ -166,6 +166,11 @@ public interface IChannel : IPartialChannel
     /// </summary>
     new Optional<IDiscordPermissionSet> Permissions { get; }
 
+    /// <summary>
+    /// Gets the channel flags.
+    /// </summary>
+    new Optional<ChannelFlags> Flags { get; }
+
     /// <inheritdoc/>
     Optional<Snowflake> IPartialChannel.ID => this.ID;
 
