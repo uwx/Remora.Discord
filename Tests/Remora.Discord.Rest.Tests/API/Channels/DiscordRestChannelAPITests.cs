@@ -88,7 +88,10 @@ public class DiscordRestChannelAPITests
         {
             var channelId = DiscordSnowflake.New(0);
             var name = "brr";
-            var icon = new MemoryStream(new byte[] { 0xDE, 0xAD, 0xBE, 0xEF });
+            await using var icon = new MemoryStream();
+            await using var binaryWriter = new BinaryWriter(icon);
+            binaryWriter.Write(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A });
+            icon.Position = 0;
 
             var api = CreateAPI
             (
@@ -101,7 +104,7 @@ public class DiscordRestChannelAPITests
                             (
                                 o => o
                                     .WithProperty("name", p => p.Is(name))
-                                    .WithProperty("icon", p => p.Is("3q2+7w==")) // base64(DEADBEEF)
+                                    .WithProperty("icon", p => p.Is("data:image/png;base64,iVBORw0KGgo="))
                             )
                     )
                     .Respond("application/json", SampleRepository.Samples[typeof(IChannel)])
@@ -189,6 +192,7 @@ public class DiscordRestChannelAPITests
             var channelId = DiscordSnowflake.New(0);
             var name = "brr";
             var position = 1;
+            var isNsfw = true;
             var bitrate = 8000;
             var userLimit = 10;
             var permissionOverwrites = new List<PermissionOverwrite>();
@@ -210,6 +214,7 @@ public class DiscordRestChannelAPITests
                                 o => o
                                     .WithProperty("name", p => p.Is(name))
                                     .WithProperty("position", p => p.Is(position))
+                                    .WithProperty("nsfw", p => p.Is(isNsfw))
                                     .WithProperty("bitrate", p => p.Is(bitrate))
                                     .WithProperty("user_limit", p => p.Is(userLimit))
                                     .WithProperty("permission_overwrites", p => p.IsArray(a => a.WithCount(0)))
@@ -226,12 +231,63 @@ public class DiscordRestChannelAPITests
                 channelId,
                 name,
                 position,
+                isNsfw,
                 bitrate,
                 userLimit,
                 permissionOverwrites,
                 parentId,
                 rtcRegion,
                 videoQualityMode,
+                reason
+            );
+
+            ResultAssert.Successful(result);
+        }
+
+        /// <summary>
+        /// Tests whether the API method performs its request correctly.
+        /// </summary>
+        /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
+        [Fact]
+        public async Task PerformsStageChannelRequestCorrectly()
+        {
+            var channelId = DiscordSnowflake.New(0);
+            var name = "brr";
+            var position = 1;
+            var bitrate = 8000;
+            var permissionOverwrites = new List<PermissionOverwrite>();
+            var rtcRegion = "somewhere";
+            var reason = "test";
+
+            var api = CreateAPI
+            (
+                b => b
+                    .Expect(HttpMethod.Patch, $"{Constants.BaseURL}channels/{channelId}")
+                    .WithHeaders(Constants.AuditLogHeaderName, reason)
+                    .WithJson
+                    (
+                        j => j
+                            .IsObject
+                            (
+                                o => o
+                                    .WithProperty("name", p => p.Is(name))
+                                    .WithProperty("position", p => p.Is(position))
+                                    .WithProperty("bitrate", p => p.Is(bitrate))
+                                    .WithProperty("permission_overwrites", p => p.IsArray(a => a.WithCount(0)))
+                                    .WithProperty("rtc_region", p => p.Is(rtcRegion))
+                            )
+                    )
+                    .Respond("application/json", SampleRepository.Samples[typeof(IChannel)])
+            );
+
+            var result = await api.ModifyGuildStageChannelAsync
+            (
+                channelId,
+                name,
+                position,
+                bitrate,
+                permissionOverwrites,
+                rtcRegion,
                 reason
             );
 
@@ -252,6 +308,7 @@ public class DiscordRestChannelAPITests
             var isLocked = false;
             var rateLimitPerUser = 10;
             var reason = "test";
+            var flags = ChannelFlags.Pinned;
 
             var api = CreateAPI
             (
@@ -269,6 +326,7 @@ public class DiscordRestChannelAPITests
                                     .WithProperty("auto_archive_duration", p => p.Is((int)autoArchiveDuration))
                                     .WithProperty("locked", p => p.Is(isLocked))
                                     .WithProperty("rate_limit_per_user", p => p.Is(rateLimitPerUser))
+                                    .WithProperty("flags", p => p.Is((int)flags))
                             )
                     )
                     .Respond("application/json", SampleRepository.Samples[typeof(IChannel)])
@@ -282,6 +340,7 @@ public class DiscordRestChannelAPITests
                 autoArchiveDuration,
                 isLocked,
                 rateLimitPerUser,
+                flags,
                 reason
             );
 
@@ -314,6 +373,8 @@ public class DiscordRestChannelAPITests
                                     .WithProperty("user_limit", p => p.IsNull())
                                     .WithProperty("permission_overwrites", p => p.IsNull())
                                     .WithProperty("parent_id", p => p.IsNull())
+                                    .WithProperty("video_quality_mode", p => p.IsNull())
+                                    .WithProperty("rtc_region", p => p.IsNull())
                             )
                     )
                     .Respond("application/json", SampleRepository.Samples[typeof(IChannel)])
@@ -322,17 +383,16 @@ public class DiscordRestChannelAPITests
             var result = await api.ModifyChannelAsync
             (
                 channelId,
-                default,
-                default,
-                default,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
+                position: null,
+                topic: null,
+                isNsfw: null,
+                rateLimitPerUser: null,
+                bitrate: null,
+                userLimit: null,
+                permissionOverwrites: null,
+                parentId: null,
+                videoQualityMode: null,
+                rtcRegion: null
             );
 
             ResultAssert.Successful(result);
@@ -884,12 +944,7 @@ public class DiscordRestChannelAPITests
                                 return false;
                             }
 
-                            if (!multipart.ContainsContent<StringContent>("payload_json"))
-                            {
-                                return false;
-                            }
-
-                            return true;
+                            return multipart.ContainsContent<StringContent>("payload_json");
                         }
                     )
                     .WithMultipartJsonPayload
@@ -973,12 +1028,7 @@ public class DiscordRestChannelAPITests
                                 return false;
                             }
 
-                            if (!multipart.ContainsContent<StringContent>("payload_json"))
-                            {
-                                return false;
-                            }
-
-                            return true;
+                            return multipart.ContainsContent<StringContent>("payload_json");
                         }
                     )
                     .WithMultipartJsonPayload
@@ -1068,12 +1118,8 @@ public class DiscordRestChannelAPITests
                             {
                                 return false;
                             }
-                            if (!multipart.ContainsContent<StringContent>("payload_json"))
-                            {
-                                return false;
-                            }
 
-                            return true;
+                            return multipart.ContainsContent<StringContent>("payload_json");
                         }
                     )
                     .WithMultipartJsonPayload
@@ -1540,12 +1586,7 @@ public class DiscordRestChannelAPITests
                                 return false;
                             }
 
-                            if (!multipart.ContainsContent<StringContent>("payload_json"))
-                            {
-                                return false;
-                            }
-
-                            return true;
+                            return multipart.ContainsContent<StringContent>("payload_json");
                         }
                     )
                     .WithMultipartJsonPayload
@@ -1624,12 +1665,7 @@ public class DiscordRestChannelAPITests
                                 return false;
                             }
 
-                            if (!multipart.ContainsContent<StringContent>("payload_json"))
-                            {
-                                return false;
-                            }
-
-                            return true;
+                            return multipart.ContainsContent<StringContent>("payload_json");
                         }
                     )
                     .WithMultipartJsonPayload
@@ -1714,12 +1750,8 @@ public class DiscordRestChannelAPITests
                             {
                                 return false;
                             }
-                            if (!multipart.ContainsContent<StringContent>("payload_json"))
-                            {
-                                return false;
-                            }
 
-                            return true;
+                            return multipart.ContainsContent<StringContent>("payload_json");
                         }
                     )
                     .WithMultipartJsonPayload

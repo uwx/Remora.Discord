@@ -5,17 +5,10 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <Version>3.0.2</Version>
-        <Description>
-            $(BaseDescription)
-
-            This package provides a framework for creating interaction-driven entities using Discord's message
-            components.
-        </Description>
+        <Version>3.0.22</Version>
+        <Description>Framework for using Discord's interaction-driven message components</Description>
         <PackageReleaseNotes>
             Update dependencies.
-            Allow modal submissions through.
-            Update and default to API v10.
         </PackageReleaseNotes>
     </PropertyGroup>
 

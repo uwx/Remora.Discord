@@ -22,7 +22,6 @@
 
 using System.Collections.Generic;
 using System.IO;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
@@ -30,33 +29,38 @@ using OneOf;
 using Remora.Discord.API.Abstractions.Objects;
 using Remora.Discord.API.Abstractions.Rest;
 using Remora.Discord.Caching.Services;
-using Remora.Discord.Rest.API;
 using Remora.Rest;
 using Remora.Rest.Core;
 using Remora.Results;
 
 namespace Remora.Discord.Caching.API;
 
-/// <inheritdoc />
+/// <summary>
+/// Decorates the registered webhook API with caching functionality.
+/// </summary>
 [PublicAPI]
-public class CachingDiscordRestWebhookAPI : DiscordRestWebhookAPI
+public partial class CachingDiscordRestWebhookAPI : IDiscordRestWebhookAPI, IRestCustomizable
 {
+    private readonly IDiscordRestWebhookAPI _actual;
     private readonly CacheService _cacheService;
 
-    /// <inheritdoc cref="DiscordRestWebhookAPI(IRestHttpClient, JsonSerializerOptions)" />
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CachingDiscordRestWebhookAPI"/> class.
+    /// </summary>
+    /// <param name="actual">The decorated instance.</param>
+    /// <param name="cacheService">The cache service.</param>
     public CachingDiscordRestWebhookAPI
     (
-        IRestHttpClient restHttpClient,
-        JsonSerializerOptions jsonOptions,
+        IDiscordRestWebhookAPI actual,
         CacheService cacheService
     )
-        : base(restHttpClient, jsonOptions)
     {
+        _actual = actual;
         _cacheService = cacheService;
     }
 
     /// <inheritdoc />
-    public override async Task<Result<IWebhook>> CreateWebhookAsync
+    public async Task<Result<IWebhook>> CreateWebhookAsync
     (
         Snowflake channelID,
         string name,
@@ -65,7 +69,7 @@ public class CachingDiscordRestWebhookAPI : DiscordRestWebhookAPI
         CancellationToken ct = default
     )
     {
-        var createWebhook = await base.CreateWebhookAsync(channelID, name, avatar, reason, ct);
+        var createWebhook = await _actual.CreateWebhookAsync(channelID, name, avatar, reason, ct);
         if (!createWebhook.IsSuccess)
         {
             return createWebhook;
@@ -74,33 +78,33 @@ public class CachingDiscordRestWebhookAPI : DiscordRestWebhookAPI
         var webhook = createWebhook.Entity;
         var key = KeyHelpers.CreateWebhookCacheKey(webhook.ID);
 
-        _cacheService.Cache(key, webhook);
+        await _cacheService.CacheAsync(key, webhook, ct);
 
         return createWebhook;
     }
 
     /// <inheritdoc />
-    public override async Task<Result> DeleteWebhookAsync
+    public async Task<Result> DeleteWebhookAsync
     (
         Snowflake webhookID,
         Optional<string> reason = default,
         CancellationToken ct = default
     )
     {
-        var deleteWebhook = await base.DeleteWebhookAsync(webhookID, reason, ct);
+        var deleteWebhook = await _actual.DeleteWebhookAsync(webhookID, reason, ct);
         if (!deleteWebhook.IsSuccess)
         {
             return deleteWebhook;
         }
 
         var key = KeyHelpers.CreateWebhookCacheKey(webhookID);
-        _cacheService.Evict<IWebhook>(key);
+        await _cacheService.EvictAsync<IWebhook>(key, ct);
 
         return deleteWebhook;
     }
 
     /// <inheritdoc />
-    public override async Task<Result<IMessage?>> ExecuteWebhookAsync
+    public async Task<Result<IMessage?>> ExecuteWebhookAsync
     (
         Snowflake webhookID,
         string token,
@@ -115,10 +119,11 @@ public class CachingDiscordRestWebhookAPI : DiscordRestWebhookAPI
         Optional<IReadOnlyList<IMessageComponent>> components = default,
         Optional<IReadOnlyList<OneOf<FileData, IPartialAttachment>>> attachments = default,
         Optional<MessageFlags> flags = default,
+        Optional<string> threadName = default,
         CancellationToken ct = default
     )
     {
-        var execute = await base.ExecuteWebhookAsync
+        var execute = await _actual.ExecuteWebhookAsync
         (
             webhookID,
             token,
@@ -133,6 +138,7 @@ public class CachingDiscordRestWebhookAPI : DiscordRestWebhookAPI
             components,
             attachments,
             flags,
+            threadName,
             ct
         );
 
@@ -148,38 +154,40 @@ public class CachingDiscordRestWebhookAPI : DiscordRestWebhookAPI
         }
 
         var key = KeyHelpers.CreateMessageCacheKey(message.ChannelID, message.ID);
-        _cacheService.Cache(key, message);
+        await _cacheService.CacheAsync(key, message, ct);
 
         return execute;
     }
 
     /// <inheritdoc />
-    public override async Task<Result<IWebhook>> GetWebhookAsync
+    public async Task<Result<IWebhook>> GetWebhookAsync
     (
         Snowflake webhookID,
         CancellationToken ct = default
     )
     {
         var key = KeyHelpers.CreateWebhookCacheKey(webhookID);
-        if (_cacheService.TryGetValue<IWebhook>(key, out var cachedInstance))
+        var cacheResult = await _cacheService.TryGetValueAsync<IWebhook>(key, ct);
+
+        if (cacheResult.IsSuccess)
         {
-            return Result<IWebhook>.FromSuccess(cachedInstance);
+            return cacheResult;
         }
 
-        var getWebhook = await base.GetWebhookAsync(webhookID, ct);
+        var getWebhook = await _actual.GetWebhookAsync(webhookID, ct);
         if (!getWebhook.IsSuccess)
         {
             return getWebhook;
         }
 
         var webhook = getWebhook.Entity;
-        _cacheService.Cache(key, webhook);
+        await _cacheService.CacheAsync(key, webhook, ct);
 
         return getWebhook;
     }
 
     /// <inheritdoc />
-    public override async Task<Result<IWebhook>> ModifyWebhookAsync
+    public async Task<Result<IWebhook>> ModifyWebhookAsync
     (
         Snowflake webhookID,
         Optional<string> name = default,
@@ -189,7 +197,7 @@ public class CachingDiscordRestWebhookAPI : DiscordRestWebhookAPI
         CancellationToken ct = default
     )
     {
-        var modifyWebhook = await base.ModifyWebhookAsync(webhookID, name, avatar, channelID, reason, ct);
+        var modifyWebhook = await _actual.ModifyWebhookAsync(webhookID, name, avatar, channelID, reason, ct);
         if (!modifyWebhook.IsSuccess)
         {
             return modifyWebhook;
@@ -198,74 +206,78 @@ public class CachingDiscordRestWebhookAPI : DiscordRestWebhookAPI
         var key = KeyHelpers.CreateWebhookCacheKey(webhookID);
         var webhook = modifyWebhook.Entity;
 
-        _cacheService.Cache(key, webhook);
+        await _cacheService.CacheAsync(key, webhook, ct);
 
         return modifyWebhook;
     }
 
     /// <inheritdoc />
-    public override async Task<Result<IReadOnlyList<IWebhook>>> GetChannelWebhooksAsync
+    public async Task<Result<IReadOnlyList<IWebhook>>> GetChannelWebhooksAsync
     (
         Snowflake channelID,
         CancellationToken ct = default
     )
     {
         var key = KeyHelpers.CreateChannelWebhooksCacheKey(channelID);
-        if (_cacheService.TryGetValue<IReadOnlyList<IWebhook>>(key, out var cachedInstance))
+        var cacheResult = await _cacheService.TryGetValueAsync<IReadOnlyList<IWebhook>>(key, ct);
+
+        if (cacheResult.IsSuccess)
         {
-            return Result<IReadOnlyList<IWebhook>>.FromSuccess(cachedInstance);
+            return cacheResult;
         }
 
-        var getWebhooks = await base.GetChannelWebhooksAsync(channelID, ct);
+        var getWebhooks = await _actual.GetChannelWebhooksAsync(channelID, ct);
         if (!getWebhooks.IsSuccess)
         {
             return getWebhooks;
         }
 
         var webhooks = getWebhooks.Entity;
-        _cacheService.Cache(key, webhooks);
+        await _cacheService.CacheAsync(key, webhooks, ct);
 
         foreach (var webhook in webhooks)
         {
             var webhookKey = KeyHelpers.CreateWebhookCacheKey(webhook.ID);
-            _cacheService.Cache(webhookKey, webhook);
+            await _cacheService.CacheAsync(webhookKey, webhook, ct);
         }
 
         return getWebhooks;
     }
 
     /// <inheritdoc />
-    public override async Task<Result<IReadOnlyList<IWebhook>>> GetGuildWebhooksAsync
+    public async Task<Result<IReadOnlyList<IWebhook>>> GetGuildWebhooksAsync
     (
         Snowflake guildID, CancellationToken ct = default
     )
     {
         var key = KeyHelpers.CreateGuildWebhooksCacheKey(guildID);
-        if (_cacheService.TryGetValue<IReadOnlyList<IWebhook>>(key, out var cachedInstance))
+        var cacheResult = await _cacheService.TryGetValueAsync<IReadOnlyList<IWebhook>>(key, ct);
+
+        if (cacheResult.IsSuccess)
         {
-            return Result<IReadOnlyList<IWebhook>>.FromSuccess(cachedInstance);
+            return cacheResult;
         }
 
-        var getWebhooks = await base.GetGuildWebhooksAsync(guildID, ct);
+        var getWebhooks = await _actual.GetGuildWebhooksAsync(guildID, ct);
         if (!getWebhooks.IsSuccess)
         {
             return getWebhooks;
         }
 
         var webhooks = getWebhooks.Entity;
-        _cacheService.Cache(key, webhooks);
+        await _cacheService.CacheAsync(key, webhooks, ct);
 
         foreach (var webhook in webhooks)
         {
             var webhookKey = KeyHelpers.CreateWebhookCacheKey(webhook.ID);
-            _cacheService.Cache(webhookKey, webhook);
+            await _cacheService.CacheAsync(webhookKey, webhook, ct);
         }
 
         return getWebhooks;
     }
 
     /// <inheritdoc />
-    public override async Task<Result> DeleteWebhookWithTokenAsync
+    public async Task<Result> DeleteWebhookWithTokenAsync
     (
         Snowflake webhookID,
         string token,
@@ -273,20 +285,20 @@ public class CachingDiscordRestWebhookAPI : DiscordRestWebhookAPI
         CancellationToken ct = default
     )
     {
-        var deleteWebhook = await base.DeleteWebhookWithTokenAsync(webhookID, token, reason, ct);
+        var deleteWebhook = await _actual.DeleteWebhookWithTokenAsync(webhookID, token, reason, ct);
         if (!deleteWebhook.IsSuccess)
         {
             return deleteWebhook;
         }
 
         var key = KeyHelpers.CreateWebhookCacheKey(webhookID);
-        _cacheService.Evict<IWebhook>(key);
+        await _cacheService.EvictAsync<IWebhook>(key, ct);
 
         return deleteWebhook;
     }
 
     /// <inheritdoc />
-    public override async Task<Result<IWebhook>> GetWebhookWithTokenAsync
+    public async Task<Result<IWebhook>> GetWebhookWithTokenAsync
     (
         Snowflake webhookID,
         string token,
@@ -294,25 +306,27 @@ public class CachingDiscordRestWebhookAPI : DiscordRestWebhookAPI
     )
     {
         var key = KeyHelpers.CreateWebhookCacheKey(webhookID);
-        if (_cacheService.TryGetValue<IWebhook>(key, out var cachedInstance))
+        var cacheResult = await _cacheService.TryGetValueAsync<IWebhook>(key, ct);
+
+        if (cacheResult.IsSuccess)
         {
-            return Result<IWebhook>.FromSuccess(cachedInstance);
+            return cacheResult;
         }
 
-        var getWebhook = await base.GetWebhookWithTokenAsync(webhookID, token, ct);
+        var getWebhook = await _actual.GetWebhookWithTokenAsync(webhookID, token, ct);
         if (!getWebhook.IsSuccess)
         {
             return getWebhook;
         }
 
         var webhook = getWebhook.Entity;
-        _cacheService.Cache(key, webhook);
+        await _cacheService.CacheAsync(key, webhook, ct);
 
         return getWebhook;
     }
 
     /// <inheritdoc />
-    public override async Task<Result<IWebhook>> ModifyWebhookWithTokenAsync
+    public async Task<Result<IWebhook>> ModifyWebhookWithTokenAsync
     (
         Snowflake webhookID,
         string token,
@@ -322,7 +336,7 @@ public class CachingDiscordRestWebhookAPI : DiscordRestWebhookAPI
         CancellationToken ct = default
     )
     {
-        var modifyWebhook = await base.ModifyWebhookWithTokenAsync(webhookID, token, name, avatar, reason, ct);
+        var modifyWebhook = await _actual.ModifyWebhookWithTokenAsync(webhookID, token, name, avatar, reason, ct);
         if (!modifyWebhook.IsSuccess)
         {
             return modifyWebhook;
@@ -331,13 +345,13 @@ public class CachingDiscordRestWebhookAPI : DiscordRestWebhookAPI
         var key = KeyHelpers.CreateWebhookCacheKey(webhookID);
         var webhook = modifyWebhook.Entity;
 
-        _cacheService.Cache(key, webhook);
+        await _cacheService.CacheAsync(key, webhook, ct);
 
         return modifyWebhook;
     }
 
     /// <inheritdoc />
-    public override async Task<Result<IMessage>> EditWebhookMessageAsync
+    public async Task<Result<IMessage>> EditWebhookMessageAsync
     (
         Snowflake webhookID,
         string token,
@@ -351,7 +365,7 @@ public class CachingDiscordRestWebhookAPI : DiscordRestWebhookAPI
         CancellationToken ct = default
     )
     {
-        var result = await base.EditWebhookMessageAsync
+        var result = await _actual.EditWebhookMessageAsync
         (
             webhookID,
             token,
@@ -371,13 +385,13 @@ public class CachingDiscordRestWebhookAPI : DiscordRestWebhookAPI
         }
 
         var key = KeyHelpers.CreateWebhookMessageCacheKey(token, messageID);
-        _cacheService.Cache(key, result.Entity);
+        await _cacheService.CacheAsync(key, result.Entity, ct);
 
         return result;
     }
 
     /// <inheritdoc />
-    public override async Task<Result> DeleteWebhookMessageAsync
+    public async Task<Result> DeleteWebhookMessageAsync
     (
         Snowflake webhookID,
         string token,
@@ -386,20 +400,20 @@ public class CachingDiscordRestWebhookAPI : DiscordRestWebhookAPI
         CancellationToken ct = default
     )
     {
-        var result = await base.DeleteWebhookMessageAsync(webhookID, token, messageID, threadID, ct);
+        var result = await _actual.DeleteWebhookMessageAsync(webhookID, token, messageID, threadID, ct);
         if (!result.IsSuccess)
         {
             return result;
         }
 
         var key = KeyHelpers.CreateWebhookMessageCacheKey(token, messageID);
-        _cacheService.Evict<IMessage>(key);
+        await _cacheService.EvictAsync<IMessage>(key, ct);
 
         return result;
     }
 
     /// <inheritdoc />
-    public override async Task<Result<IMessage>> GetWebhookMessageAsync
+    public async Task<Result<IMessage>> GetWebhookMessageAsync
     (
         Snowflake webhookID,
         string webhookToken,
@@ -409,18 +423,20 @@ public class CachingDiscordRestWebhookAPI : DiscordRestWebhookAPI
     )
     {
         var key = KeyHelpers.CreateWebhookMessageCacheKey(webhookToken, messageID);
-        if (_cacheService.TryGetValue<IMessage>(key, out var cachedInstance))
+        var cacheResult = await _cacheService.TryGetValueAsync<IMessage>(key, ct);
+
+        if (cacheResult.IsSuccess)
         {
-            return Result<IMessage>.FromSuccess(cachedInstance);
+            return cacheResult;
         }
 
-        var result = await base.GetWebhookMessageAsync(webhookID, webhookToken, messageID, threadID, ct);
+        var result = await _actual.GetWebhookMessageAsync(webhookID, webhookToken, messageID, threadID, ct);
         if (!result.IsSuccess)
         {
             return result;
         }
 
-        _cacheService.Cache(key, result.Entity);
+        await _cacheService.CacheAsync(key, result.Entity, ct);
 
         return result;
     }

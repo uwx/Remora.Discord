@@ -86,11 +86,24 @@ public class RequireDiscordPermissionCondition :
             );
         }
 
+        var getGuild = await _guildAPI.GetGuildAsync(guildID, ct: ct);
+        if (!getGuild.IsSuccess)
+        {
+            return (Result)getGuild;
+        }
+
+        var guild = getGuild.Entity;
+        if (guild.OwnerID == _context.User.ID)
+        {
+            // guild owner is always allowed
+            return Result.FromSuccess();
+        }
+
         // Grab required information
         var getMember = await _guildAPI.GetGuildMemberAsync(guildID, _context.User.ID, ct);
         if (!getMember.IsSuccess)
         {
-            return Result.FromError(getMember);
+            return (Result)getMember;
         }
 
         var member = getMember.Entity;
@@ -121,7 +134,7 @@ public class RequireDiscordPermissionCondition :
         var getMember = await _guildAPI.GetGuildMemberAsync(guildID, user.ID, ct);
         if (!getMember.IsSuccess)
         {
-            return Result.FromError(getMember);
+            return (Result)getMember;
         }
 
         var member = getMember.Entity;
@@ -131,7 +144,7 @@ public class RequireDiscordPermissionCondition :
 
     /// <inheritdoc />
     /// <remarks>
-    /// This method checks the condition against the target user.
+    /// This method checks the condition against the target member.
     /// </remarks>
     public async ValueTask<Result> CheckAsync
     (
@@ -151,13 +164,13 @@ public class RequireDiscordPermissionCondition :
         var getRoles = await _guildAPI.GetGuildRolesAsync(guildID, ct);
         if (!getRoles.IsSuccess)
         {
-            return Result.FromError(getRoles);
+            return (Result)getRoles;
         }
 
         var getChannel = await _channelAPI.GetChannelAsync(_context.ChannelID, ct);
         if (!getChannel.IsSuccess)
         {
-            return Result.FromError(getChannel);
+            return (Result)getChannel;
         }
 
         var guildRoles = getRoles.Entity;
@@ -234,13 +247,13 @@ public class RequireDiscordPermissionCondition :
         var getRoles = await _guildAPI.GetGuildRolesAsync(guildID, ct);
         if (!getRoles.IsSuccess)
         {
-            return Result.FromError(getRoles);
+            return (Result)getRoles;
         }
 
         var getChannel = await _channelAPI.GetChannelAsync(_context.ChannelID, ct);
         if (!getChannel.IsSuccess)
         {
-            return Result.FromError(getChannel);
+            return (Result)getChannel;
         }
 
         var guildRoles = getRoles.Entity;
@@ -277,7 +290,7 @@ public class RequireDiscordPermissionCondition :
         {
             return permissionDeniedError with
             {
-                Message = $"The given role does not fulfill the permission requirements " +
+                Message = "The given role does not fulfill the permission requirements " +
                           $"({Explain(permissionInformation, attribute.Operator)})."
             };
         }
@@ -321,7 +334,7 @@ public class RequireDiscordPermissionCondition :
                 false,
                 (current, value) => current ^ value
             ),
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new ArgumentOutOfRangeException(nameof(logicalOperator))
         };
 
         return passesCheck

@@ -21,6 +21,7 @@
 //
 
 using System;
+using JetBrains.Annotations;
 using Remora.Rest.Core;
 
 namespace Remora.Discord.API.Abstractions.Objects;
@@ -28,6 +29,7 @@ namespace Remora.Discord.API.Abstractions.Objects;
 /// <summary>
 /// Represents a scheduled event in a guild.
 /// </summary>
+[PublicAPI]
 public interface IGuildScheduledEvent
 {
     /// <summary>
@@ -59,7 +61,7 @@ public interface IGuildScheduledEvent
     /// <summary>
     /// Gets the description of the scheduled event, if any.
     /// </summary>
-    Optional<string> Description { get; }
+    Optional<string?> Description { get; }
 
     /// <summary>
     /// Gets the time the scheduled event will start.

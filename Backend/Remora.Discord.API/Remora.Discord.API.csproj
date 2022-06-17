@@ -5,24 +5,19 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <Version>52.0.0</Version>
-        <Description>
-            $(BaseDescription)
-
-            This package contains the default implementations for the abstract API definitions, provided by
-            Remora.Discord.API.Abstractions.
-        </Description>
+        <Version>60.0.0</Version>
+        <Description>Remora.Discord's implementation of Discord's API objects</Description>
         <PackageReleaseNotes>
-            Update and default to API v10.
-            Rework message component structure.
+            Separate interaction data structures.
+            Break out event-only fields.
         </PackageReleaseNotes>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
         <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
-        <PackageReference Include="System.Text.Json" Version="6.0.2" />
-        <PackageReference Include="Remora.Rest" Version="1.2.2" />
+        <PackageReference Include="System.Text.Json" Version="6.0.4" />
+        <PackageReference Include="Remora.Rest" Version="2.0.2" />
     </ItemGroup>
 
     <ItemGroup>

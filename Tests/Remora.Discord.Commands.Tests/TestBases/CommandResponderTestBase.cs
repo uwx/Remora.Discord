@@ -24,6 +24,7 @@ using System;
 using Microsoft.Extensions.DependencyInjection;
 using Remora.Discord.Commands.Extensions;
 using Remora.Discord.Commands.Responders;
+using Remora.Discord.Rest.Extensions;
 
 namespace Remora.Discord.Commands.Tests.TestBases;
 
@@ -42,9 +43,10 @@ public abstract class CommandResponderTestBase : IDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="CommandResponderTestBase"/> class.
     /// </summary>
-    public CommandResponderTestBase()
+    protected CommandResponderTestBase()
     {
         var serviceCollection = new ServiceCollection()
+            .AddDiscordRest(_ => "dummy")
             .AddDiscordCommands();
 
         // ReSharper disable once VirtualMemberCallInConstructor
@@ -67,6 +69,7 @@ public abstract class CommandResponderTestBase : IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
+        GC.SuppressFinalize(this);
         _scope.Dispose();
     }
 }

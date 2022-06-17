@@ -76,7 +76,6 @@ public static class ServiceCollectionExtensions
                 options =>
                 {
                     options.PropertyNamingPolicy = snakeCase;
-                    options.DictionaryKeyPolicy = snakeCase;
 
                     options.Converters.Add(new PayloadConverter(allowUnknownEvents));
                     options.Converters.Add(new VoicePayloadConverter());
@@ -253,8 +252,6 @@ public static class ServiceCollectionExtensions
             .WithPropertyName(g => g.IsOwner, "owner")
             .WithPropertyName(g => g.GuildFeatures, "features")
             .WithPropertyConverter(g => g.GuildFeatures, new StringEnumListConverter<GuildFeature>(new SnakeCaseNamingPolicy(true)))
-            .WithPropertyName(g => g.IsLarge, "large")
-            .WithPropertyName(g => g.IsUnavailable, "unavailable")
             .WithPropertyName(g => g.IsWidgetEnabled, "widget_enabled")
             .WithPropertyName(g => g.IsPremiumProgressBarEnabled, "premium_progress_bar_enabled")
             .WithPropertyConverter(g => g.AFKTimeout, new UnitTimeSpanConverter(TimeUnit.Seconds));
@@ -375,6 +372,9 @@ public static class ServiceCollectionExtensions
 
         // Stickers
         options.AddDataObjectConverter<IGuildStickersUpdate, GuildStickersUpdate>();
+
+        // Application commands
+        options.AddDataObjectConverter<IApplicationCommandPermissionsUpdate, ApplicationCommandPermissionsUpdate>();
 
         // Other
         options.AddDataObjectConverter<IUnknownEvent, UnknownEvent>();
@@ -546,8 +546,6 @@ public static class ServiceCollectionExtensions
             .WithPropertyName(g => g.IsOwner, "owner")
             .WithPropertyName(g => g.GuildFeatures, "features")
             .WithPropertyConverter(g => g.GuildFeatures, new StringEnumListConverter<GuildFeature>(new SnakeCaseNamingPolicy(true)))
-            .WithPropertyName(g => g.IsLarge, "large")
-            .WithPropertyName(g => g.IsUnavailable, "unavailable")
             .WithPropertyName(g => g.IsWidgetEnabled, "widget_enabled")
             .WithPropertyName(g => g.IsPremiumProgressBarEnabled, "premium_progress_bar_enabled")
             .WithPropertyConverter(g => g.AFKTimeout, new UnitTimeSpanConverter(TimeUnit.Seconds));
@@ -556,8 +554,6 @@ public static class ServiceCollectionExtensions
             .WithPropertyName(g => g.IsOwner, "owner")
             .WithPropertyName(g => g.GuildFeatures, "features")
             .WithPropertyConverter(g => g.GuildFeatures, new StringEnumListConverter<GuildFeature>(new SnakeCaseNamingPolicy(true)))
-            .WithPropertyName(g => g.IsLarge, "large")
-            .WithPropertyName(g => g.IsUnavailable, "unavailable")
             .WithPropertyName(g => g.IsWidgetEnabled, "widget_enabled")
             .WithPropertyName(g => g.IsPremiumProgressBarEnabled, "premium_progress_bar_enabled")
             .WithPropertyConverter(g => g.AFKTimeout, new UnitTimeSpanConverter(TimeUnit.Seconds));
@@ -657,10 +653,7 @@ public static class ServiceCollectionExtensions
     private static JsonSerializerOptions AddInviteObjectConverters(this JsonSerializerOptions options)
     {
         options.AddDataObjectConverter<IInvite, Invite>();
-
         options.AddDataObjectConverter<IPartialInvite, PartialInvite>();
-
-        options.AddDataObjectConverter<IInviteStageInstance, InviteStageInstance>();
 
         return options;
     }
@@ -906,7 +899,9 @@ public static class ServiceCollectionExtensions
     /// <returns>The options, with the converters added.</returns>
     private static JsonSerializerOptions AddInteractionObjectConverters(this JsonSerializerOptions options)
     {
-        options.AddDataObjectConverter<IInteractionData, InteractionData>();
+        options.AddDataObjectConverter<IApplicationCommandData, ApplicationCommandData>();
+        options.AddDataObjectConverter<IMessageComponentData, MessageComponentData>();
+        options.AddDataObjectConverter<IModalSubmitData, ModalSubmitData>();
         options.AddDataObjectConverter
             <
                 IApplicationCommandInteractionDataOption, ApplicationCommandInteractionDataOption
@@ -931,17 +926,19 @@ public static class ServiceCollectionExtensions
             .WithPropertyName(o => o.EnableAutocomplete, "autocomplete");
         options.AddDataObjectConverter<IApplicationCommandOptionChoice, ApplicationCommandOptionChoice>();
         options.AddDataObjectConverter<IMessageInteraction, MessageInteraction>();
+        options.AddDataObjectConverter<IBulkApplicationCommandData, BulkApplicationCommandData>();
 
         options.AddDataObjectConverter
             <
                 IApplicationCommandInteractionDataResolved,
                 ApplicationCommandInteractionDataResolved
             >()
-            .WithPropertyConverter(r => r.Users, new SnowflakeDictionaryConverter<IUser>(Constants.DiscordEpoch))
+            .WithPropertyConverter(r => r.Users, new SnowflakeDictionaryConverter<IPartialUser>(Constants.DiscordEpoch))
             .WithPropertyConverter(r => r.Members, new SnowflakeDictionaryConverter<IPartialGuildMember>(Constants.DiscordEpoch))
-            .WithPropertyConverter(r => r.Roles, new SnowflakeDictionaryConverter<IRole>(Constants.DiscordEpoch))
+            .WithPropertyConverter(r => r.Roles, new SnowflakeDictionaryConverter<IPartialRole>(Constants.DiscordEpoch))
             .WithPropertyConverter(r => r.Channels, new SnowflakeDictionaryConverter<IPartialChannel>(Constants.DiscordEpoch))
-            .WithPropertyConverter(r => r.Messages, new SnowflakeDictionaryConverter<IPartialMessage>(Constants.DiscordEpoch));
+            .WithPropertyConverter(r => r.Messages, new SnowflakeDictionaryConverter<IPartialMessage>(Constants.DiscordEpoch))
+            .WithPropertyConverter(r => r.Attachments, new SnowflakeDictionaryConverter<IPartialAttachment>(Constants.DiscordEpoch));
 
         options.AddDataObjectConverter<IGuildApplicationCommandPermissions, GuildApplicationCommandPermissions>();
         options.AddDataObjectConverter
@@ -1005,6 +1002,8 @@ public static class ServiceCollectionExtensions
             .WithPropertyName(a => a.IsBotPublic, "bot_public")
             .WithPropertyName(a => a.DoesBotRequireCodeGrant, "bot_require_code_grant")
             .WithPropertyName(a => a.PrimarySKUID, "primary_sku_id");
+
+        options.AddDataObjectConverter<IApplicationInstallParameters, ApplicationInstallParameters>();
 
         options.AddDataObjectConverter<IAuthorizationInformation, AuthorizationInformation>();
 

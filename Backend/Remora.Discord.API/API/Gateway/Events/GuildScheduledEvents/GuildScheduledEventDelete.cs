@@ -21,6 +21,7 @@
 //
 
 using System;
+using JetBrains.Annotations;
 using Remora.Discord.API.Abstractions.Gateway.Events;
 using Remora.Discord.API.Abstractions.Objects;
 using Remora.Discord.API.Objects;
@@ -29,6 +30,7 @@ using Remora.Rest.Core;
 namespace Remora.Discord.API.Gateway.Events;
 
 /// <inheritdoc cref="IGuildScheduledEventDelete"/>
+[PublicAPI]
 public record GuildScheduledEventDelete
 (
     Snowflake ID,
@@ -36,7 +38,7 @@ public record GuildScheduledEventDelete
     Snowflake? ChannelID,
     Optional<Snowflake?> CreatorID,
     string Name,
-    Optional<string> Description,
+    Optional<string?> Description,
     DateTimeOffset ScheduledStartTime,
     DateTimeOffset? ScheduledEndTime,
     GuildScheduledEventPrivacyLevel PrivacyLevel,

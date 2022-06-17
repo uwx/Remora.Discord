@@ -37,7 +37,7 @@ public enum DiscordError
     Unknown = -1,
 
     /// <summary>
-    /// A general error (suc as a malformed request body, amongst other things).
+    /// A general error (such as a malformed request body, amongst other things).
     /// </summary>
     GeneralError = 0,
 
@@ -212,6 +212,11 @@ public enum DiscordError
     UnknownApplicationCommand = 10063,
 
     /// <summary>
+    /// Unknown voice state.
+    /// </summary>
+    UnknownVoiceState = 10065,
+
+    /// <summary>
     /// Unknown application command permissions.
     /// </summary>
     UnknownApplicationCommandPermissions = 10066,
@@ -254,7 +259,7 @@ public enum DiscordError
     /// <summary>
     /// Explicit content cannot be sent to the intended recipient(s).
     /// </summary>
-    ExplictContentCannotBeSent = 20009,
+    ExplicitContentCannotBeSent = 20009,
 
     /// <summary>
     /// You are not allowed to perform that operation on this application.
@@ -412,6 +417,21 @@ public enum DiscordError
     MaxNumberOfEditsToMessagesOlderThanOneHourReached = 30046,
 
     /// <summary>
+    /// The maximum number of pinned threads in the forum channel has been reached.
+    /// </summary>
+    MaxNumberOfPinnedThreadsInForumChannelReached = 30047,
+
+    /// <summary>
+    /// The maximum number of tags in the forum channel has been reached.
+    /// </summary>
+    MaxNumberOfTagsInForumChannelReached = 30048,
+
+    /// <summary>
+    /// The requested bitrate is too high for a channel of this type.
+    /// </summary>
+    BitrateTooHighForChannelType = 30052,
+
+    /// <summary>
     /// Unauthorized. Provide a valid token and try again.
     /// </summary>
     Unauthorized = 40001,
@@ -502,9 +522,9 @@ public enum DiscordError
     CannotSendMessageToUser = 50007,
 
     /// <summary>
-    /// Cannot send messages in a voice channel.
+    /// Cannot send messages in a non-text channel.
     /// </summary>
-    CannotSendMessageToVoiceChannel = 50008,
+    CannotSendMessageToNonTextChannel = 50008,
 
     /// <summary>
     /// Channel verification level is too high for you to gain access.
@@ -546,6 +566,11 @@ public enum DiscordError
     /// delete.
     /// </summary>
     TooFewOrTooManyMessagesToDelete = 50016,
+
+    /// <summary>
+    /// The provided MFA level was invalid.
+    /// </summary>
+    InvalidMFALevel = 50017,
 
     /// <summary>
     /// A message and only be pinned  to the channel it was went in.
@@ -649,6 +674,11 @@ public enum DiscordError
     CannotDeleteCommunityRequiredChannel = 50074,
 
     /// <summary>
+    /// Stickers sent in a message can't be edited.
+    /// </summary>
+    CannotEditStickersInMessage = 50080,
+
+    /// <summary>
     /// Invalid sticker sent.
     /// </summary>
     InvalidSticker = 50081,
@@ -692,6 +722,11 @@ public enum DiscordError
     /// The request body contains invalid JSON.
     /// </summary>
     InvalidJSONInRequestBody = 50109,
+
+    /// <summary>
+    /// You do not have permission to send this sticker.
+    /// </summary>
+    MissingPermissionToSendSticker = 50600,
 
     /// <summary>
     /// Two factor is required for this operation.
@@ -786,5 +821,10 @@ public enum DiscordError
     /// <summary>
     /// For whatever reason, the system failed to create a stage for the stage event.
     /// </summary>
-    FailedToCreatedStageForEvent = 180002
+    FailedToCreatedStageForEvent = 180002,
+
+    /// <summary>
+    /// Webhooks can only create threads in forum channels, not in other channels.
+    /// </summary>
+    WebhooksCanOnlyCreateThreadsInForumChannels = 220003
 }

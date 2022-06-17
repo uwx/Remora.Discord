@@ -27,6 +27,7 @@ using System.Text.Json;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Remora.Discord.Gateway.Responders;
 using Remora.Discord.Gateway.Services;
@@ -57,6 +58,7 @@ public static class ServiceCollectionExtensions
             .AddDiscordRest(tokenFactory);
 
         serviceCollection.TryAddSingleton<Random>();
+        serviceCollection.TryAddSingleton<ResponderDispatchService>();
         serviceCollection.TryAddSingleton<IResponderTypeRepository>(s => s.GetRequiredService<IOptions<ResponderService>>().Value);
         serviceCollection.TryAddSingleton<DiscordGatewayClient>();
 
@@ -64,7 +66,8 @@ public static class ServiceCollectionExtensions
         serviceCollection.TryAddTransient<IPayloadTransportService>(s => new WebSocketPayloadTransportService
         (
             s,
-            s.GetRequiredService<IOptionsMonitor<JsonSerializerOptions>>().Get("Discord")
+            s.GetRequiredService<IOptionsMonitor<JsonSerializerOptions>>().Get("Discord"),
+            s.GetRequiredService<ILogger<WebSocketPayloadTransportService>>()
         ));
 
         return serviceCollection;
@@ -78,7 +81,11 @@ public static class ServiceCollectionExtensions
     /// <param name="group">The group the responder belongs to.</param>
     /// <typeparam name="TResponder">The concrete responder type.</typeparam>
     /// <returns>The service collection, with the responder added.</returns>
-    public static IServiceCollection AddResponder<TResponder>
+    public static IServiceCollection AddResponder
+        <
+            [MeansImplicitUse(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
+            TResponder
+        >
     (
         this IServiceCollection serviceCollection,
         ResponderGroup group = ResponderGroup.Normal

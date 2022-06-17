@@ -21,6 +21,7 @@
 //
 
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Remora.Rest.Core;
 
 namespace Remora.Discord.API.Abstractions.Objects;
@@ -28,12 +29,13 @@ namespace Remora.Discord.API.Abstractions.Objects;
 /// <summary>
 /// Represents data that was resolved during serverside execution of the command.
 /// </summary>
+[PublicAPI]
 public interface IApplicationCommandInteractionDataResolved
 {
     /// <summary>
     /// Gets the resolved users, if any.
     /// </summary>
-    Optional<IReadOnlyDictionary<Snowflake, IUser>> Users { get; }
+    Optional<IReadOnlyDictionary<Snowflake, IPartialUser>> Users { get; }
 
     /// <summary>
     /// Gets the resolved guild members, if any.
@@ -43,7 +45,7 @@ public interface IApplicationCommandInteractionDataResolved
     /// <summary>
     /// Gets the resolved roles, if any.
     /// </summary>
-    Optional<IReadOnlyDictionary<Snowflake, IRole>> Roles { get; }
+    Optional<IReadOnlyDictionary<Snowflake, IPartialRole>> Roles { get; }
 
     /// <summary>
     /// Gets the resolved channels, if any.
@@ -58,5 +60,5 @@ public interface IApplicationCommandInteractionDataResolved
     /// <summary>
     /// Gets the resolved attachments, if any.
     /// </summary>
-    Optional<IReadOnlyDictionary<Snowflake, IAttachment>> Attachments { get; }
+    Optional<IReadOnlyDictionary<Snowflake, IPartialAttachment>> Attachments { get; }
 }

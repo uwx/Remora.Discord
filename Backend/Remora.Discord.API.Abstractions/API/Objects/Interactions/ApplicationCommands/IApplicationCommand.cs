@@ -70,12 +70,43 @@ public interface IApplicationCommand
     Optional<IReadOnlyList<IApplicationCommandOption>> Options { get; }
 
     /// <summary>
-    /// Gets a value indicating whether the command is enabled by default when added to a guild.
-    /// </summary>
-    Optional<bool> DefaultPermission { get; }
-
-    /// <summary>
     /// Gets a value that increments on substantial changes.
     /// </summary>
     Snowflake Version { get; }
+
+    /// <summary>
+    /// Gets the localized names of the command.
+    /// </summary>
+    Optional<IReadOnlyDictionary<string, string>?> NameLocalizations { get; }
+
+    /// <summary>
+    /// Gets the localized name of the command.
+    /// </summary>
+    /// <remarks>
+    /// This field is only supplied by Discord as a response, and is not used to set the actual localized string.
+    /// </remarks>
+    Optional<string> NameLocalized { get; }
+
+    /// <summary>
+    /// Gets the localized descriptions of the command.
+    /// </summary>
+    Optional<IReadOnlyDictionary<string, string>?> DescriptionLocalizations { get; }
+
+    /// <summary>
+    /// Gets the localized description of the command.
+    /// </summary>
+    /// <remarks>
+    /// This field is only supplied by Discord as a response, and is not used to set the actual localized string.
+    /// </remarks>
+    Optional<string> DescriptionLocalized { get; }
+
+    /// <summary>
+    /// Gets a value that indicates the requisite permissions to execute the command.
+    /// </summary>
+    IDiscordPermissionSet? DefaultMemberPermissions { get; }
+
+    /// <summary>
+    /// Gets a value that indicates whether this command can be executed in DMs.
+    /// </summary>
+    Optional<bool> DMPermission { get; }
 }

@@ -5,23 +5,17 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <Version>2022.12</Version>
-        <Description>
-            $(BaseDescription)
-
-            This package is a metapackage for Remora.Discord, providing references to everything you need to get
-            started. Note that this package implies a dependency on the latest version of Remora.Discord's main
-            packages, with no regard for API compatibility across builds.
-
-            Production packages/projects should probably prefer explicit dependencies instead.
-        </Description>
+        <Version>2022.34</Version>
+        <Description>Metapackage for Remora.Discord's various components</Description>
         <PackageReleaseNotes>
-            Update dependencies.
-            Update and default to API v10.
-            Rework message component structure.
-            Exempt interaction endpoints from global rate limits.
-            Deprecate invite stage instances.
-            Add the message content intent.
+            Separate interaction data structures.
+            Update voice channel endpoints and permissions.
+            Remove audit log reason from modify channel position.
+            Add new error code.
+            Implement Modify Guild MFA Level.
+            Add new error code.
+            Break out event-only fields.
+            Add new error codes.
         </PackageReleaseNotes>
 
         <!-- No need for build output, since this is a metapackage -->
@@ -30,9 +24,11 @@
         <EmbedUntrackedSources>false</EmbedUntrackedSources>
         <EmbedAllSources>false</EmbedAllSources>
         <IncludeBuildOutput>false</IncludeBuildOutput>
+        <NoPackageAnalysis>true</NoPackageAnalysis>
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Backend\Remora.Discord.Caching\Remora.Discord.Caching.csproj" />
       <ProjectReference Include="..\Remora.Discord.Commands\Remora.Discord.Commands.csproj" />
       <ProjectReference Include="..\Remora.Discord.Extensions\Remora.Discord.Extensions.csproj" />
       <ProjectReference Include="..\Remora.Discord.Hosting\Remora.Discord.Hosting.csproj" />

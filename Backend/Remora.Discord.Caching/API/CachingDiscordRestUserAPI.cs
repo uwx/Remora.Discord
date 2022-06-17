@@ -22,69 +22,76 @@
 
 using System.Collections.Generic;
 using System.IO;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Remora.Discord.API.Abstractions.Objects;
+using Remora.Discord.API.Abstractions.Rest;
 using Remora.Discord.Caching.Services;
-using Remora.Discord.Rest.API;
 using Remora.Rest;
 using Remora.Rest.Core;
 using Remora.Results;
 
 namespace Remora.Discord.Caching.API;
 
-/// <inheritdoc />
+/// <summary>
+/// Decorates the registered user API with caching functionality.
+/// </summary>
 [PublicAPI]
-public class CachingDiscordRestUserAPI : DiscordRestUserAPI
+public partial class CachingDiscordRestUserAPI : IDiscordRestUserAPI, IRestCustomizable
 {
+    private readonly IDiscordRestUserAPI _actual;
     private readonly CacheService _cacheService;
 
-    /// <inheritdoc cref="DiscordRestUserAPI(IRestHttpClient, JsonSerializerOptions)" />
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CachingDiscordRestUserAPI"/> class.
+    /// </summary>
+    /// <param name="actual">The decorated instance.</param>
+    /// <param name="cacheService">The cache service.</param>
     public CachingDiscordRestUserAPI
     (
-        IRestHttpClient restHttpClient,
-        JsonSerializerOptions jsonOptions,
+        IDiscordRestUserAPI actual,
         CacheService cacheService
     )
-        : base(restHttpClient, jsonOptions)
     {
+        _actual = actual;
         _cacheService = cacheService;
     }
 
     /// <inheritdoc />
-    public override async Task<Result<IUser>> GetUserAsync
+    public async Task<Result<IUser>> GetUserAsync
     (
         Snowflake userID,
         CancellationToken ct = default
     )
     {
         var key = KeyHelpers.CreateUserCacheKey(userID);
-        if (_cacheService.TryGetValue<IUser>(key, out var cachedInstance))
+        var cacheResult = await _cacheService.TryGetValueAsync<IUser>(key, ct);
+
+        if (cacheResult.IsSuccess)
         {
-            return Result<IUser>.FromSuccess(cachedInstance);
+            return cacheResult;
         }
 
-        var getUser = await base.GetUserAsync(userID, ct);
+        var getUser = await _actual.GetUserAsync(userID, ct);
         if (!getUser.IsSuccess)
         {
             return getUser;
         }
 
         var user = getUser.Entity;
-        _cacheService.Cache(key, user);
+        await _cacheService.CacheAsync(key, user, ct);
 
         return getUser;
     }
 
     /// <inheritdoc />
-    public override async Task<Result<IChannel>> CreateDMAsync
+    public async Task<Result<IChannel>> CreateDMAsync
     (
         Snowflake recipientID,
         CancellationToken ct = default)
     {
-        var createDM = await base.CreateDMAsync(recipientID, ct);
+        var createDM = await _actual.CreateDMAsync(recipientID, ct);
         if (!createDM.IsSuccess)
         {
             return createDM;
@@ -93,21 +100,23 @@ public class CachingDiscordRestUserAPI : DiscordRestUserAPI
         var dm = createDM.Entity;
         var key = KeyHelpers.CreateChannelCacheKey(dm.ID);
 
-        _cacheService.Cache(key, dm);
+        await _cacheService.CacheAsync(key, dm, ct);
 
         return createDM;
     }
 
     /// <inheritdoc />
-    public override async Task<Result<IUser>> GetCurrentUserAsync(CancellationToken ct = default)
+    public async Task<Result<IUser>> GetCurrentUserAsync(CancellationToken ct = default)
     {
         var key = KeyHelpers.CreateCurrentUserCacheKey();
-        if (_cacheService.TryGetValue<IUser>(key, out var cachedInstance))
+        var cacheResult = await _cacheService.TryGetValueAsync<IUser>(key, ct);
+
+        if (cacheResult.IsSuccess)
         {
-            return Result<IUser>.FromSuccess(cachedInstance);
+            return cacheResult;
         }
 
-        var getUser = await base.GetCurrentUserAsync(ct);
+        var getUser = await _actual.GetCurrentUserAsync(ct);
         if (!getUser.IsSuccess)
         {
             return getUser;
@@ -117,51 +126,53 @@ public class CachingDiscordRestUserAPI : DiscordRestUserAPI
         var userKey = KeyHelpers.CreateUserCacheKey(user.ID);
 
         // Cache this as both a normal user and our current user
-        _cacheService.Cache(key, user);
-        _cacheService.Cache(userKey, user);
+        await _cacheService.CacheAsync(key, user, ct);
+        await _cacheService.CacheAsync(userKey, user, ct);
 
         return getUser;
     }
 
     /// <inheritdoc />
-    public override async Task<Result<IReadOnlyList<IConnection>>> GetUserConnectionsAsync
+    public async Task<Result<IReadOnlyList<IConnection>>> GetUserConnectionsAsync
     (
         CancellationToken ct = default
     )
     {
         var key = KeyHelpers.CreateCurrentUserConnectionsCacheKey();
-        if (_cacheService.TryGetValue<IReadOnlyList<IConnection>>(key, out var cachedInstance))
+        var cacheResult = await _cacheService.TryGetValueAsync<IReadOnlyList<IConnection>>(key, ct);
+
+        if (cacheResult.IsSuccess)
         {
-            return Result<IReadOnlyList<IConnection>>.FromSuccess(cachedInstance);
+            return cacheResult;
         }
 
-        var getUserConnections = await base.GetUserConnectionsAsync(ct);
+        var getUserConnections = await _actual.GetUserConnectionsAsync(ct);
         if (!getUserConnections.IsSuccess)
         {
             return getUserConnections;
         }
 
         var connections = getUserConnections.Entity;
-        _cacheService.Cache(key, connections);
+        await _cacheService.CacheAsync(key, connections, ct);
 
         foreach (var connection in connections)
         {
             var connectionKey = KeyHelpers.CreateConnectionCacheKey(connection.ID);
-            _cacheService.Cache(connectionKey, connection);
+            await _cacheService.CacheAsync(connectionKey, connection, ct);
         }
 
         return getUserConnections;
     }
 
     /// <inheritdoc />
-    public override async Task<Result<IUser>> ModifyCurrentUserAsync
+    public async Task<Result<IUser>> ModifyCurrentUserAsync
     (
         Optional<string> username,
         Optional<Stream?> avatar = default,
         CancellationToken ct = default
     )
     {
-        var modifyUser = await base.ModifyCurrentUserAsync(username, avatar, ct);
+        var modifyUser = await _actual.ModifyCurrentUserAsync(username, avatar, ct);
         if (!modifyUser.IsSuccess)
         {
             return modifyUser;
@@ -171,50 +182,52 @@ public class CachingDiscordRestUserAPI : DiscordRestUserAPI
         var key = KeyHelpers.CreateCurrentUserCacheKey();
         var userKey = KeyHelpers.CreateUserCacheKey(user.ID);
 
-        _cacheService.Cache(key, user);
-        _cacheService.Cache(userKey, user);
+        await _cacheService.CacheAsync(key, user, ct);
+        await _cacheService.CacheAsync(userKey, user, ct);
 
         return modifyUser;
     }
 
     /// <inheritdoc />
-    public override async Task<Result<IReadOnlyList<IChannel>>> GetUserDMsAsync
+    public async Task<Result<IReadOnlyList<IChannel>>> GetUserDMsAsync
     (
         CancellationToken ct = default
     )
     {
         var key = KeyHelpers.CreateCurrentUserDMsCacheKey();
-        if (_cacheService.TryGetValue<IReadOnlyList<IChannel>>(key, out var cachedInstance))
+        var cacheResult = await _cacheService.TryGetValueAsync<IReadOnlyList<IChannel>>(key, ct);
+
+        if (cacheResult.IsSuccess)
         {
-            return Result<IReadOnlyList<IChannel>>.FromSuccess(cachedInstance);
+            return cacheResult;
         }
 
-        var getUserDMs = await base.GetUserDMsAsync(ct);
+        var getUserDMs = await _actual.GetUserDMsAsync(ct);
         if (!getUserDMs.IsSuccess)
         {
             return getUserDMs;
         }
 
         var userDMs = getUserDMs.Entity;
-        _cacheService.Cache(key, userDMs);
+        await _cacheService.CacheAsync(key, userDMs, ct);
 
         foreach (var dm in userDMs)
         {
             var channelKey = KeyHelpers.CreateChannelCacheKey(dm.ID);
-            _cacheService.Cache(channelKey, dm);
+            await _cacheService.CacheAsync(channelKey, dm, ct);
         }
 
         return getUserDMs;
     }
 
     /// <inheritdoc />
-    public override async Task<Result<IGuildMember>> GetCurrentUserGuildMemberAsync
+    public async Task<Result<IGuildMember>> GetCurrentUserGuildMemberAsync
     (
         Snowflake guildID,
         CancellationToken ct = default
     )
     {
-        var result = await base.GetCurrentUserGuildMemberAsync(guildID, ct);
+        var result = await _actual.GetCurrentUserGuildMemberAsync(guildID, ct);
         if (!result.IsSuccess)
         {
             return result;
@@ -227,7 +240,7 @@ public class CachingDiscordRestUserAPI : DiscordRestUserAPI
         }
 
         var key = KeyHelpers.CreateGuildMemberKey(guildID, user.ID);
-        _cacheService.Cache(key, member);
+        await _cacheService.CacheAsync(key, member, ct);
 
         return result;
     }

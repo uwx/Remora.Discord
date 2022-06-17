@@ -204,7 +204,10 @@ public interface IDiscordRestWebhookAPI
     /// Whether the call should block until the server has confirmed that the message was sent.
     /// </param>
     /// <param name="content">The content of the message.</param>
-    /// <param name="username">The username to use for this message.</param>
+    /// <param name="username">
+    /// The username to use for this message. Note that Discord places some restrictions on valid usernames in order to
+    /// prevent spam and abuse - check the Discord documentation for up-to-date information on allowed usernames.
+    /// </param>
     /// <param name="avatarUrl">The avatar to use for this message.</param>
     /// <param name="isTTS">Whether this message is a TTS message.</param>
     /// <param name="embeds">The embeds in the message.</param>
@@ -221,6 +224,7 @@ public interface IDiscordRestWebhookAPI
     /// mentioned in this parameter will be deleted.
     /// </param>
     /// <param name="flags">The message flags.</param>
+    /// <param name="threadName">The name of the forum thread to create.</param>
     /// <param name="ct">The cancellation token for this operation.</param>
     /// <returns>
     /// A result which may or may not have succeeded. The returned message is null if <paramref name="shouldWait"/>
@@ -241,6 +245,7 @@ public interface IDiscordRestWebhookAPI
         Optional<IReadOnlyList<IMessageComponent>> components = default,
         Optional<IReadOnlyList<OneOf<FileData, IPartialAttachment>>> attachments = default,
         Optional<MessageFlags> flags = default,
+        Optional<string> threadName = default,
         CancellationToken ct = default
     );
 
