@@ -872,7 +872,7 @@ public class DiscordGatewayClient : IDisposable
                     ? DateTime.FromBinary(lastSentHeartbeatBinary)
                     : (DateTime?)null;
 
-                var lastReceivedEvent = Interlocked.Read(ref _lastReceivedHeartbeatAck);
+                var lastReceivedEvent = Interlocked.Read(ref _lastReceivedEvent);
                 var lastReceivedEventTime = lastReceivedEvent > 0
                     ? DateTime.FromBinary(lastReceivedEvent)
                     : (DateTime?)null;
