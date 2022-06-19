@@ -362,7 +362,7 @@ public class WebSocketPayloadTransportService : IPayloadTransportService, IAsync
 
     private void LogRetry(Exception result, TimeSpan delay, int count, Context context)
     {
-        _log.LogInformation
+        _log.LogDebug
         (
             result,
             "Transient failure in websocket action - retrying after {Delay} (retry #{Count})",
@@ -378,7 +378,7 @@ public class WebSocketPayloadTransportService : IPayloadTransportService, IAsync
             return;
         }
 
-        _log.LogInformation
+        _log.LogDebug
         (
             result.Exception,
             "Transient failure in websocket action - retrying after {Delay} (retry #{Count})",
@@ -394,7 +394,7 @@ public class WebSocketPayloadTransportService : IPayloadTransportService, IAsync
             return;
         }
 
-        _log.LogInformation
+        _log.LogDebug
         (
             result.Exception,
             "Transient failure in websocket action - retrying after {Delay} (retry #{Count})",
@@ -410,6 +410,8 @@ public class WebSocketPayloadTransportService : IPayloadTransportService, IAsync
         {
             return;
         }
+
+        GC.SuppressFinalize(this);
 
         await DisconnectAsync(false);
     }

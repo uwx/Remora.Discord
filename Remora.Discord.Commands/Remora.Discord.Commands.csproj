@@ -5,11 +5,11 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <Version>22.0.0</Version>
+        <Version>25.0.0</Version>
         <Description>Glue code for using Remora.Commands with Remora.Discord</Description>
         <PackageReleaseNotes>
-            Update nuget packages.
-            Change default of `DiscordDefaultDMPermissionAttribute` to true
+            Upgrade nuget packegs.
+            Revert partialization of some resolved entities.
         </PackageReleaseNotes>
     </PropertyGroup>
 
@@ -21,9 +21,15 @@
         <PackageReference Include="FuzzySharp" Version="2.0.2" />
         <PackageReference Include="Humanizer.Core" Version="2.14.1" />
         <PackageReference Include="NGettext" Version="0.6.7" />
-        <PackageReference Include="Remora.Commands" Version="9.0.7" />
+        <PackageReference Include="Remora.Commands" Version="10.0.0" />
         <PackageReference Include="Remora.Extensions.Options.Immutable" Version="1.0.3" />
         <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="API\ResponseTrackingInteractionAPI.Delegations.cs">
+        <DependentUpon>ResponseTrackingInteractionAPI.cs</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>

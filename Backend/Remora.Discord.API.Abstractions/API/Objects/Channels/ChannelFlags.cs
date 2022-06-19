@@ -20,15 +20,19 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+using System;
+using JetBrains.Annotations;
+
 namespace Remora.Discord.API.Abstractions.Objects;
 
 /// <summary>
-/// Enumerates various flags that can be applied to a channel.
+/// Enumerates various channel flags.
 /// </summary>
+[PublicAPI, Flags]
 public enum ChannelFlags
 {
     /// <summary>
-    /// This thread is pinned to the top of its parent forum channel.
+    /// The thread is pinned to the top of its parent forum channel.
     /// </summary>
     Pinned = 1 << 1
 }

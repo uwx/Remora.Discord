@@ -221,7 +221,6 @@ public interface IDiscordRestGuildAPI
     /// </summary>
     /// <param name="guildID">The ID of the guild.</param>
     /// <param name="positionModifications">The new positions of the modified channels.</param>
-    /// <param name="reason">The reason to mark the action in the audit log with.</param>
     /// <param name="ct">The cancellation token for this operation.</param>
     /// <returns>A result which may or may not have succeeded.</returns>
     Task<Result> ModifyGuildChannelPositionsAsync
@@ -236,7 +235,6 @@ public interface IDiscordRestGuildAPI
             Snowflake? ParentID
             )
         > positionModifications,
-        Optional<string> reason = default,
         CancellationToken ct = default
     );
 
@@ -246,7 +244,11 @@ public interface IDiscordRestGuildAPI
     /// <param name="guildID">The ID of the guild.</param>
     /// <param name="ct">The cancellation token for this operation.</param>
     /// <returns>A result which may or may not have succeeded.</returns>
-    Task<Result<IGuildThreadQueryResponse>> ListActiveThreadsAsync(Snowflake guildID, CancellationToken ct = default);
+    Task<Result<IGuildThreadQueryResponse>> ListActiveGuildThreadsAsync
+    (
+        Snowflake guildID,
+        CancellationToken ct = default
+    );
 
     /// <summary>
     /// Gets member information about the given user.
@@ -580,6 +582,20 @@ public interface IDiscordRestGuildAPI
         Optional<string?> unicodeEmoji = default,
         Optional<bool?> isMentionable = default,
         Optional<string> reason = default,
+        CancellationToken ct = default
+    );
+
+    /// <summary>
+    /// Modifies a guild's multi-factor authentication level. Requires guild ownership.
+    /// </summary>
+    /// <param name="guildID">The ID of the guild to modify.</param>
+    /// <param name="level">The new MFA level.</param>
+    /// <param name="ct">The cancellation token for this operation.</param>
+    /// <returns>A modification result which may or may not have succeeded.</returns>
+    Task<Result<MultiFactorAuthenticationLevel>> ModifyGuildMFALevelAsync
+    (
+        Snowflake guildID,
+        MultiFactorAuthenticationLevel level,
         CancellationToken ct = default
     );
 

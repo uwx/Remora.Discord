@@ -101,6 +101,7 @@ public class DiscordRestChannelAPI : AbstractDiscordRestAPI, IDiscordRestChannel
         Optional<bool> isLocked = default,
         Optional<AutoArchiveDuration> defaultAutoArchiveDuration = default,
         Optional<string?> rtcRegion = default,
+        Optional<ChannelFlags> flags = default,
         Optional<string> reason = default,
         CancellationToken ct = default
     )
@@ -154,6 +155,7 @@ public class DiscordRestChannelAPI : AbstractDiscordRestAPI, IDiscordRestChannel
                         json.Write("locked", isLocked, this.JsonOptions);
                         json.Write("default_auto_archive_duration", defaultAutoArchiveDuration);
                         json.Write("rtc_region", rtcRegion, this.JsonOptions);
+                        json.Write("flags", flags, this.JsonOptions);
                     }
                 )
                 .WithRateLimitContext(this.RateLimitCache),
@@ -213,6 +215,7 @@ public class DiscordRestChannelAPI : AbstractDiscordRestAPI, IDiscordRestChannel
         Snowflake channelID,
         Optional<string> name = default,
         Optional<int?> position = default,
+        Optional<bool?> isNsfw = default,
         Optional<int?> bitrate = default,
         Optional<int?> userLimit = default,
         Optional<IReadOnlyList<IPartialPermissionOverwrite>?> permissionOverwrites = default,
@@ -228,12 +231,39 @@ public class DiscordRestChannelAPI : AbstractDiscordRestAPI, IDiscordRestChannel
             channelID,
             name,
             position: position,
+            isNsfw: isNsfw,
             bitrate: bitrate,
             userLimit: userLimit,
             permissionOverwrites: permissionOverwrites,
             parentId: parentId,
             rtcRegion: rtcRegion,
             videoQualityMode: videoQualityMode,
+            reason: reason,
+            ct: ct
+        );
+    }
+
+    /// <inheritdoc />
+    public virtual Task<Result<IChannel>> ModifyGuildStageChannelAsync
+    (
+        Snowflake channelID,
+        Optional<string> name = default,
+        Optional<int?> position = default,
+        Optional<int?> bitrate = default,
+        Optional<IReadOnlyList<IPartialPermissionOverwrite>?> permissionOverwrites = default,
+        Optional<string?> rtcRegion = default,
+        Optional<string> reason = default,
+        CancellationToken ct = default
+    )
+    {
+        return ModifyChannelAsync
+        (
+            channelID,
+            name,
+            position: position,
+            bitrate: bitrate,
+            permissionOverwrites: permissionOverwrites,
+            rtcRegion: rtcRegion,
             reason: reason,
             ct: ct
         );
@@ -278,6 +308,7 @@ public class DiscordRestChannelAPI : AbstractDiscordRestAPI, IDiscordRestChannel
         Optional<AutoArchiveDuration> autoArchiveDuration = default,
         Optional<bool> isLocked = default,
         Optional<int?> rateLimitPerUser = default,
+        Optional<ChannelFlags> flags = default,
         Optional<string> reason = default,
         CancellationToken ct = default
     )
@@ -290,6 +321,7 @@ public class DiscordRestChannelAPI : AbstractDiscordRestAPI, IDiscordRestChannel
             autoArchiveDuration: autoArchiveDuration,
             isLocked: isLocked,
             rateLimitPerUser: rateLimitPerUser,
+            flags: flags,
             reason: reason,
             ct: ct
         );

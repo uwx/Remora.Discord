@@ -355,7 +355,6 @@ public class DiscordRestGuildAPI : AbstractDiscordRestAPI, IDiscordRestGuildAPI
             Snowflake? ParentID
             )
         > positionModifications,
-        Optional<string> reason = default,
         CancellationToken ct = default
     )
     {
@@ -363,7 +362,6 @@ public class DiscordRestGuildAPI : AbstractDiscordRestAPI, IDiscordRestGuildAPI
         (
             $"guilds/{guildID}/channels",
             b => b
-                .AddAuditLogReason(reason)
                 .WithJsonArray
                 (
                     json =>
@@ -880,6 +878,30 @@ public class DiscordRestGuildAPI : AbstractDiscordRestAPI, IDiscordRestGuildAPI
     }
 
     /// <inheritdoc />
+    public Task<Result<MultiFactorAuthenticationLevel>> ModifyGuildMFALevelAsync
+    (
+        Snowflake guildID,
+        MultiFactorAuthenticationLevel level,
+        CancellationToken ct = default
+    )
+    {
+        return this.RestHttpClient.PostAsync<MultiFactorAuthenticationLevel>
+        (
+            $"guilds/{guildID}/mfa",
+            b => b
+                .WithJson
+                (
+                    json =>
+                    {
+                        json.Write("level", level, this.JsonOptions);
+                    }
+                )
+                .WithRateLimitContext(this.RateLimitCache),
+            ct: ct
+        );
+    }
+
+    /// <inheritdoc />
     public virtual Task<Result> DeleteGuildRoleAsync
     (
         Snowflake guildId,
@@ -1230,7 +1252,7 @@ public class DiscordRestGuildAPI : AbstractDiscordRestAPI, IDiscordRestGuildAPI
     }
 
     /// <inheritdoc />
-    public Task<Result<IGuildThreadQueryResponse>> ListActiveThreadsAsync
+    public Task<Result<IGuildThreadQueryResponse>> ListActiveGuildThreadsAsync
     (
         Snowflake guildID,
         CancellationToken ct = default
