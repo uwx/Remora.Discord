@@ -16,7 +16,6 @@
 
     <ItemGroup>
       <PackageReference Include="OneOf" Version="3.0.216" />
-      <PackageReference Include="Remora.Rest.Core" Version="2.0.2" />
       <PackageReference Include="Remora.Results" Version="7.2.0" />
     </ItemGroup>
 
@@ -42,6 +41,10 @@
       <Compile Update="API\Objects\Activities\IActivityButton.cs">
         <DependentUpon>IActivity.cs</DependentUpon>
       </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\Remora.Rest\Remora.Rest.Core\Remora.Rest.Core.csproj" />
     </ItemGroup>
 
 </Project>
