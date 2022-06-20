@@ -1,5 +1,5 @@
 //
-//  IGuildThreadQueryResponse.cs
+//  ResponderDispatchOptions.cs
 //
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
@@ -20,24 +20,12 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-using System.Collections.Generic;
-using JetBrains.Annotations;
+using Remora.Discord.Gateway.Services;
 
-namespace Remora.Discord.API.Abstractions.Objects;
+namespace Remora.Discord.Gateway;
 
 /// <summary>
-/// Represents a response object from the Guild REST API regarding a thread query.
+///  Represents options related to <see cref="ResponderDispatchService"/>.
 /// </summary>
-[PublicAPI]
-public interface IGuildThreadQueryResponse
-{
-    /// <summary>
-    /// Gets the threads returned by the query.
-    /// </summary>
-    IReadOnlyList<IChannel> Threads { get; }
-
-    /// <summary>
-    /// Gets a set of member objects that map to the returned threads the current user has joined.
-    /// </summary>
-    IReadOnlyList<IThreadMember> Members { get; }
-}
+/// <param name="MaxItems">How many items can be queued for dispatch at any given time.</param>
+public record ResponderDispatchOptions(uint MaxItems = 100);
