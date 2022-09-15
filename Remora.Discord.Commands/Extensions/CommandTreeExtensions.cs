@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -22,8 +22,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
+using Humanizer;
 using JetBrains.Annotations;
 using OneOf;
 using Remora.Commands;
@@ -51,13 +53,13 @@ public static class CommandTreeExtensions
      * Various Discord-imposed limits.
      */
 
-    private const int MaxRootCommandsOrGroups = 100;
-    private const int MaxGroupCommands = 25;
-    private const int MaxChoiceValues = 25;
-    private const int MaxCommandParameters = 25;
-    private const int MaxCommandStringifiedLength = 4000;
-    private const int MaxCommandDescriptionLength = 100;
-    private const int MaxTreeDepth = 3; // Top level is a depth of 1
+    private const int _maxRootCommandsOrGroups = 100;
+    private const int _maxGroupCommands = 25;
+    private const int _maxChoiceValues = 25;
+    private const int _maxCommandParameters = 25;
+    private const int _maxCommandStringifiedLength = 4000;
+    private const int _maxCommandDescriptionLength = 100;
+    private const int _maxTreeDepth = 3; // Top level is a depth of 1
 
     /// <summary>
     /// Maps a set of Discord application commands to their respective command nodes.
@@ -66,14 +68,14 @@ public static class CommandTreeExtensions
     /// <param name="discordTree">The Discord commands.</param>
     /// <returns>The node mapping.</returns>
     public static Dictionary
-        <
-            (Optional<Snowflake> GuildID, Snowflake CommandID),
-            OneOf<IReadOnlyDictionary<string, CommandNode>, CommandNode>
-        > MapDiscordCommands
-        (
-            this CommandTree commandTree,
-            IReadOnlyList<IApplicationCommand> discordTree
-        )
+    <
+        (Optional<Snowflake> GuildID, Snowflake CommandID),
+        OneOf<IReadOnlyDictionary<string, CommandNode>, CommandNode>
+    > MapDiscordCommands
+    (
+        this CommandTree commandTree,
+        IReadOnlyList<IApplicationCommand> discordTree
+    )
     {
         var map = new Dictionary
         <
@@ -193,12 +195,12 @@ public static class CommandTreeExtensions
                 return new UnsupportedFeatureError("Overloads are not supported.");
             }
 
-            if (GetCommandStringifiedLength(translationResult.Entity) > MaxCommandStringifiedLength)
+            if (GetCommandStringifiedLength(translationResult.Entity) > _maxCommandStringifiedLength)
             {
                 return new UnsupportedFeatureError
                 (
                     "One or more commands is too long (combined length of name, description, and value " +
-                    $"properties), max {MaxCommandStringifiedLength}).",
+                    $"properties), max {_maxCommandStringifiedLength}).",
                     node
                 );
             }
@@ -220,7 +222,8 @@ public static class CommandTreeExtensions
                 new BulkApplicationCommandData
                 (
                     option.Name,
-                    string.IsNullOrWhiteSpace(option.Description) ? default(Optional<string>) : option.Description,
+                    option.Description,
+                    default,
                     option.Options,
                     commandType,
                     localizedNames.Count > 0 ? new(localizedNames) : default,
@@ -232,11 +235,11 @@ public static class CommandTreeExtensions
         }
 
         // Perform validations
-        if (commands.Count > MaxRootCommandsOrGroups)
+        if (commands.Count > _maxRootCommandsOrGroups)
         {
             return new UnsupportedFeatureError
             (
-                $"Too many root-level commands or groups (had {commands.Count}, max {MaxRootCommandsOrGroups})."
+                $"Too many root-level commands or groups (had {commands.Count}, max {_maxRootCommandsOrGroups})."
             );
         }
 
@@ -351,11 +354,11 @@ public static class CommandTreeExtensions
         ILocalizationProvider localizationProvider
     )
     {
-        if (treeDepth > MaxTreeDepth)
+        if (treeDepth > _maxTreeDepth)
         {
             return new UnsupportedFeatureError
             (
-                $"A sub-command or group was nested too deeply (depth {treeDepth}, max {MaxTreeDepth}).",
+                $"A sub-command or group was nested too deeply (depth {treeDepth}, max {_maxTreeDepth}).",
                 node
             );
         }
@@ -425,11 +428,11 @@ public static class CommandTreeExtensions
             return Result<IApplicationCommandOption?>.FromSuccess(null);
         }
 
-        if (subCommandCount > MaxGroupCommands)
+        if (subCommandCount > _maxGroupCommands)
         {
             return new UnsupportedFeatureError
             (
-                $"Too many commands under a group ({subCommandCount}, max {MaxGroupCommands}).",
+                $"Too many commands under a group ({subCommandCount}, max {_maxGroupCommands}).",
                 group
             );
         }
@@ -479,20 +482,31 @@ public static class CommandTreeExtensions
                 );
             }
 
-            if (command.CommandMethod.GetParameters().Length > 0)
+            var parameters = command.CommandMethod.GetParameters();
+            if (parameters.Length > 0)
             {
-                return new UnsupportedFeatureError
-                (
-                    "Context menu commands may not have parameters.",
-                    command
-                );
+                var expectedParameter = commandType.AsParameterName();
+                if (parameters.Length != 1 || parameters[0].Name != expectedParameter)
+                {
+                    throw new InvalidOperationException
+                    (
+                        $"{commandType.Humanize()} context menu commands may only have a single parameter named {expectedParameter}."
+                    );
+                }
             }
         }
 
-        var buildOptionsResult = TryCreateCommandParameterOptions(command, localizationProvider);
-        if (!buildOptionsResult.IsSuccess)
+        var options = default(Optional<IReadOnlyList<IApplicationCommandOption>>);
+
+        // Options are only supported by slash commands (ChatInput)
+        if (command.GetCommandType() is ApplicationCommandType.ChatInput)
         {
-            return Result<IApplicationCommandOption?>.FromError(buildOptionsResult);
+            var buildOptionsResult = TryCreateCommandParameterOptions(command, localizationProvider);
+            if (!buildOptionsResult.IsSuccess)
+            {
+                return Result<IApplicationCommandOption?>.FromError(buildOptionsResult);
+            }
+            options = new(buildOptionsResult.Entity);
         }
 
         var name = commandType is not ApplicationCommandType.ChatInput
@@ -525,7 +539,7 @@ public static class CommandTreeExtensions
             SubCommand,
             name,
             description,
-            Options: new(buildOptionsResult.Entity),
+            Options: options,
             NameLocalizations: localizedNames.Count > 0 ? new(localizedNames) : default,
             DescriptionLocalizations: localizedDescriptions.Count > 0 ? new(localizedDescriptions) : default
         );
@@ -604,6 +618,39 @@ public static class CommandTreeExtensions
                 );
             }
 
+            var minLength = parameter.Parameter.GetCustomAttribute<MinLengthAttribute>();
+            var maxLength = parameter.Parameter.GetCustomAttribute<MaxLengthAttribute>();
+
+            if (discordType is not ApplicationCommandOptionType.String && (minLength is not null || maxLength is not null))
+            {
+                return new UnsupportedParameterFeatureError
+                (
+                    "A non-string parameter may not specify a minimum or maximum length.",
+                    command,
+                    parameter
+                );
+            }
+
+            if (minLength?.Length is < 0)
+            {
+                return new UnsupportedParameterFeatureError
+                (
+                    "The minimum length must be more than 0.",
+                    command,
+                    parameter
+                );
+            }
+
+            if (maxLength?.Length is < 1)
+            {
+                return new UnsupportedParameterFeatureError
+                (
+                    "The maximum length must be more than 1.",
+                    command,
+                    parameter
+                );
+            }
+
             var name = parameter.HintName.ToLowerInvariant();
             var description = parameter.Description;
 
@@ -623,17 +670,19 @@ public static class CommandTreeExtensions
                 MinValue: minValue?.Value ?? default(Optional<OneOf<ulong, long, float, double>>),
                 MaxValue: maxValue?.Value ?? default(Optional<OneOf<ulong, long, float, double>>),
                 NameLocalizations: localizedNames.Count > 0 ? new(localizedNames) : default,
-                DescriptionLocalizations: localizedDescriptions.Count > 0 ? new(localizedDescriptions) : default
+                DescriptionLocalizations: localizedDescriptions.Count > 0 ? new(localizedDescriptions) : default,
+                MinLength: (uint?)minLength?.Length ?? default(Optional<uint>),
+                MaxLength: (uint?)maxLength?.Length ?? default(Optional<uint>)
             );
 
             parameterOptions.Add(parameterOption);
         }
 
-        if (parameterOptions.Count > MaxCommandParameters)
+        if (parameterOptions.Count > _maxCommandParameters)
         {
             return new UnsupportedFeatureError
             (
-                $"Too many parameters in a command (had {parameterOptions.Count}, max {MaxCommandParameters}).",
+                $"Too many parameters in a command (had {parameterOptions.Count}, max {_maxCommandParameters}).",
                 command
             );
         }
@@ -654,7 +703,7 @@ public static class CommandTreeExtensions
         if (actualParameterType.IsEnum)
         {
             // Add the choices directly
-            if (Enum.GetValues(actualParameterType).Length <= MaxChoiceValues)
+            if (Enum.GetValues(actualParameterType).Length <= _maxChoiceValues)
             {
                 var createChoices = EnumExtensions.GetEnumChoices(actualParameterType, localizationProvider);
                 if (!createChoices.IsSuccess)
@@ -723,14 +772,47 @@ public static class CommandTreeExtensions
     private static int GetCommandStringifiedLength(IApplicationCommandOption option)
     {
         var length = 0;
-        length += option.Name.Length;
-        length += option.Description.Length;
+
+        if (option.NameLocalizations.IsDefined(out var nameLocalizations))
+        {
+            var longestLocalizedName = nameLocalizations.Values.Max(n => n.Length);
+            length += longestLocalizedName > option.Name.Length
+                ? longestLocalizedName
+                : option.Name.Length;
+        }
+        else
+        {
+            length += option.Name.Length;
+        }
+
+        if (option.DescriptionLocalizations.IsDefined(out var descriptionLocalizations))
+        {
+            var longestLocalizedDescription = descriptionLocalizations.Values.Max(n => n.Length);
+            length += longestLocalizedDescription > option.Description.Length
+                ? longestLocalizedDescription
+                : option.Description.Length;
+        }
+        else
+        {
+            length += option.Description.Length;
+        }
 
         if (option.Choices.IsDefined(out var choices))
         {
             foreach (var choice in choices)
             {
-                length += choice.Name.Length;
+                if (choice.NameLocalizations.IsDefined(out var choiceNameLocalizations))
+                {
+                    var longestLocalizedName = choiceNameLocalizations.Values.Max(n => n.Length);
+                    length += longestLocalizedName > choice.Name.Length
+                        ? longestLocalizedName
+                        : choice.Name.Length;
+                }
+                else
+                {
+                    length += choice.Name.Length;
+                }
+
                 if (choice.Value.TryPickT0(out var choiceValue, out _))
                 {
                     length += choiceValue.Length;
@@ -755,12 +837,12 @@ public static class CommandTreeExtensions
                 var type = command.GetCommandType();
                 if (type is ApplicationCommandType.ChatInput)
                 {
-                    return description.Length <= MaxCommandDescriptionLength
+                    return description.Length <= _maxCommandDescriptionLength
                         ? Result.FromSuccess()
                         : new UnsupportedFeatureError
                         (
                             $"A command description was too long (length {description.Length}, " +
-                            $"max {MaxCommandDescriptionLength}).",
+                            $"max {_maxCommandDescriptionLength}).",
                             node
                         );
                 }
@@ -772,12 +854,12 @@ public static class CommandTreeExtensions
             default:
             {
                 // Assume it uses the default limits
-                return description.Length <= MaxCommandDescriptionLength
+                return description.Length <= _maxCommandDescriptionLength
                     ? Result.FromSuccess()
                     : new UnsupportedFeatureError
                     (
                         $"A group or parameter description was too long (length {description.Length}, " +
-                        $"max {MaxCommandDescriptionLength}).",
+                        $"max {_maxCommandDescriptionLength}).",
                         node
                     );
             }

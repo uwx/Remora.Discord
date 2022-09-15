@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -41,9 +41,31 @@ public class TokenStoreTests
         [Fact]
         public void ReturnsCorrectValue()
         {
-            var tokenStore = new TokenStore("Hello world!");
+            var tokenStore = new TokenStore("Hello world!", DiscordTokenType.Bearer);
 
             Assert.Equal("Hello world!", tokenStore.Token);
+        }
+    }
+
+    /// <summary>
+    /// Tests the <see cref="TokenStore.TokenType"/> property.
+    /// </summary>
+    public class TokenType
+    {
+        [Fact]
+        public void ReturnsCorrectValueForBotTokenType()
+        {
+            var tokenStore = new TokenStore("Hello world!", DiscordTokenType.Bot);
+
+            Assert.Equal(DiscordTokenType.Bot, tokenStore.TokenType);
+        }
+
+        [Fact]
+        public void ReturnsCorrectValueForBearerTokenType()
+        {
+            var tokenStore = new TokenStore("Hello world!", DiscordTokenType.Bearer);
+
+            Assert.Equal(DiscordTokenType.Bearer, tokenStore.TokenType);
         }
     }
 }

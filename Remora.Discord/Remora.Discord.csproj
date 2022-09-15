@@ -1,23 +1,21 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Remora.Sdk/1.1.1">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.1;net5.0;net6.0</TargetFrameworks>
-    </PropertyGroup>
-
-    <PropertyGroup>
-        <Version>2022.36</Version>
+        <VersionPrefix>2022.48</VersionPrefix>
         <Description>Metapackage for Remora.Discord's various components</Description>
         <PackageReleaseNotes>
-            Rework alive checking a little bit more.
-            Merge pull request #206 from VelvetThePanda/feat/dispatch-customization
-            Merge pull request #201 from MazeXP/rest-corrections
+            Fix optionality of `channel_id`.
+            Add `application_commands` field.
+            Add `scopes` field.
+            Update command length calculation.
+            Add new flag.
+            Fix more naming.
+            Implement support for slash command mentions.
+            Update the role caching routines.
+            Remove explicit start/stop routines.
         </PackageReleaseNotes>
 
         <!-- No need for build output, since this is a metapackage -->
-        <IncludeSymbols>false</IncludeSymbols>
-        <IncludeSource>false</IncludeSource>
-        <EmbedUntrackedSources>false</EmbedUntrackedSources>
-        <EmbedAllSources>false</EmbedAllSources>
         <IncludeBuildOutput>false</IncludeBuildOutput>
         <NoPackageAnalysis>true</NoPackageAnalysis>
     </PropertyGroup>

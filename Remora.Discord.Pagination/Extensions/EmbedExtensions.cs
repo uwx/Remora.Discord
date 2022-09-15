@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -20,6 +20,7 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+using JetBrains.Annotations;
 using Remora.Discord.API.Abstractions.Objects;
 
 namespace Remora.Discord.Pagination.Extensions;
@@ -27,7 +28,8 @@ namespace Remora.Discord.Pagination.Extensions;
 /// <summary>
 /// Defines extension methods for the <see cref="IEmbed"/> interface.
 /// </summary>
-internal static class EmbedExtensions
+[PublicAPI]
+public static class EmbedExtensions
 {
     /// <summary>
     /// Calculates the sum length of all elements in an embed which count towards Discord's internal limit.

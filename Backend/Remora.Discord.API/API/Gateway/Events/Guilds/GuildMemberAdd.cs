@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -25,7 +25,6 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using Remora.Discord.API.Abstractions.Gateway.Events;
 using Remora.Discord.API.Abstractions.Objects;
-using Remora.Discord.API.Objects;
 using Remora.Rest.Core;
 
 namespace Remora.Discord.API.Gateway.Events;
@@ -46,17 +45,4 @@ public record GuildMemberAdd
     Optional<bool?> IsPending,
     Optional<IDiscordPermissionSet> Permissions = default,
     Optional<DateTimeOffset?> CommunicationDisabledUntil = default
-) : GuildMember
-(
-    User,
-    Nickname,
-    Avatar,
-    Roles,
-    JoinedAt,
-    PremiumSince,
-    IsDeafened,
-    IsMuted,
-    IsPending,
-    Permissions,
-    CommunicationDisabledUntil
-), IGuildMemberAdd;
+) : IGuildMemberAdd;

@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -44,51 +44,45 @@ public sealed record PaginatedAppearanceOptions
 )
 {
     /// <summary>
-    /// Holds the default appearance instance.
+    /// Gets the default appearance instance.
     /// </summary>
-    public static readonly PaginatedAppearanceOptions Default = new
+    public static PaginatedAppearanceOptions Default { get; } = new
     (
         new ButtonComponent
         (
             ButtonComponentStyle.Secondary,
-            nameof(First),
-            new PartialEmoji(Name: "⏮"),
-            nameof(First)
+            Emoji: new PartialEmoji(Name: "⏮"),
+            Label: nameof(First)
         ),
         new ButtonComponent
         (
             ButtonComponentStyle.Secondary,
-            nameof(Previous),
-            new PartialEmoji(Name: "◀"),
-            nameof(Previous)
+            Emoji: new PartialEmoji(Name: "◀"),
+            Label: nameof(Previous)
         ),
         new ButtonComponent
         (
             ButtonComponentStyle.Secondary,
-            nameof(Next),
-            new PartialEmoji(Name: "▶"),
-            nameof(Next)
+            Emoji: new PartialEmoji(Name: "▶"),
+            Label: nameof(Next)
         ),
         new ButtonComponent
         (
             ButtonComponentStyle.Secondary,
-            nameof(Last),
-            new PartialEmoji(Name: "⏭"),
-            nameof(Last)
+            Emoji: new PartialEmoji(Name: "⏭"),
+            Label: nameof(Last)
         ),
         new ButtonComponent
         (
             ButtonComponentStyle.Secondary,
-            nameof(Close),
-            new PartialEmoji(Name: "\x23F9"),
-            nameof(Close)
+            Emoji: new PartialEmoji(Name: "\x23F9"),
+            Label: nameof(Close)
         ),
         new ButtonComponent
         (
             ButtonComponentStyle.Secondary,
-            nameof(Help),
-            new PartialEmoji(Name: "ℹ"),
-            nameof(Help)
+            Emoji: new PartialEmoji(Name: "ℹ"),
+            Label: nameof(Help)
         )
     );
 

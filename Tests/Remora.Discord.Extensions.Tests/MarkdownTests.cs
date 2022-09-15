@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -253,9 +253,9 @@ public class MarkdownTests
     /// </summary>
     /// <param name="unixTimestamp">The time to format.</param>
     [Theory]
-    [InlineData(1156738695)]
-    [InlineData(1590493200)]
-    [InlineData(1052218560)]
+    [InlineData(1156738695L)]
+    [InlineData(1590493200L)]
+    [InlineData(1052218560L)]
     public void TimestampWithUnixTimestampSuccess(long unixTimestamp)
     {
         var expected = $"<t:{unixTimestamp}>";
@@ -270,14 +270,14 @@ public class MarkdownTests
     /// <param name="unixTimestamp">The time to format.</param>
     /// <param name="timestampStyle">The timestamp style.</param>
     [Theory]
-    [InlineData(1052218560, TimestampStyle.ShortTime)]
-    [InlineData(1052218560, TimestampStyle.LongTime)]
-    [InlineData(1052218560, TimestampStyle.ShortDate)]
-    [InlineData(1052218560, TimestampStyle.LongDate)]
-    [InlineData(1052218560, TimestampStyle.ShortDateTime)]
-    [InlineData(1052218560, TimestampStyle.LongDateTime)]
-    [InlineData(1052218560, TimestampStyle.RelativeTime)]
-    [InlineData(1052218560, null)]
+    [InlineData(1052218560L, TimestampStyle.ShortTime)]
+    [InlineData(1052218560L, TimestampStyle.LongTime)]
+    [InlineData(1052218560L, TimestampStyle.ShortDate)]
+    [InlineData(1052218560L, TimestampStyle.LongDate)]
+    [InlineData(1052218560L, TimestampStyle.ShortDateTime)]
+    [InlineData(1052218560L, TimestampStyle.LongDateTime)]
+    [InlineData(1052218560L, TimestampStyle.RelativeTime)]
+    [InlineData(1052218560L, null)]
     public void TimestampWithUnixTimestampAndTimestampStyleSuccess(long unixTimestamp, TimestampStyle? timestampStyle)
     {
         var expected = timestampStyle switch

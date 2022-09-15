@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -24,6 +24,7 @@ using System;
 using Microsoft.Extensions.DependencyInjection;
 using Remora.Discord.Commands.Extensions;
 using Remora.Discord.Commands.Responders;
+using Remora.Discord.Rest;
 using Remora.Discord.Rest.Extensions;
 
 namespace Remora.Discord.Commands.Tests.TestBases;
@@ -46,7 +47,7 @@ public abstract class CommandResponderTestBase : IDisposable
     protected CommandResponderTestBase()
     {
         var serviceCollection = new ServiceCollection()
-            .AddDiscordRest(_ => "dummy")
+            .AddDiscordRest(_ => ("dummy", DiscordTokenType.Bot))
             .AddDiscordCommands();
 
         // ReSharper disable once VirtualMemberCallInConstructor

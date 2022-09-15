@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -32,6 +32,7 @@ using Microsoft.Extensions.Options;
 using Remora.Discord.Gateway.Responders;
 using Remora.Discord.Gateway.Services;
 using Remora.Discord.Gateway.Transport;
+using Remora.Discord.Rest;
 using Remora.Discord.Rest.Extensions;
 using Remora.Extensions.Options.Immutable;
 
@@ -58,7 +59,11 @@ public static class ServiceCollectionExtensions
     )
     {
         serviceCollection
-            .AddDiscordRest(tokenFactory, buildClient);
+            .AddDiscordRest
+            (
+                s => (tokenFactory(s), DiscordTokenType.Bot),
+                buildClient
+            );
 
         serviceCollection.TryAddSingleton<Random>();
         serviceCollection.TryAddSingleton<ResponderDispatchService>();

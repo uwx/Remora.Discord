@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -31,7 +31,7 @@ namespace Remora.Discord.Commands.Extensions;
 [PublicAPI]
 public static class StringExtensions
 {
-    private static readonly Regex UnmentionRegex = new("(\\d+)>$", RegexOptions.Compiled);
+    private static readonly Regex _unmentionRegex = new("(\\d+)>$", RegexOptions.Compiled);
 
     /// <summary>
     /// Removes Discord mention markdown from a string.
@@ -50,7 +50,7 @@ public static class StringExtensions
             return value;
         }
 
-        var regexMatches = UnmentionRegex.Match(value);
+        var regexMatches = _unmentionRegex.Match(value);
         return !regexMatches.Success
             ? value
             : regexMatches.Groups[1].Value;

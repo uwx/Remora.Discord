@@ -1,23 +1,7 @@
 ﻿//
-//  Program.cs
-//
-//  Author:
-//       Jarl Gullberg <jarl.gullberg@gmail.com>
-//
-//  Copyright (c) 2017 Jarl Gullberg
-//
-//  This program is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU Lesser General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public License
-//  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//  SPDX-FileName: Program.cs
+//  SPDX-FileCopyrightText: Copyright (c) Jarl Gullberg
+//  SPDX-License-Identifier: MIT
 //
 
 using System;
@@ -36,7 +20,7 @@ using Remora.Discord.Hosting.Extensions;
 using Remora.Discord.Interactivity.Extensions;
 using Remora.Discord.Pagination.Extensions;
 using Remora.Discord.Samples.Interactivity.Commands;
-using Remora.Discord.Samples.Interactivity.Entities;
+using Remora.Discord.Samples.Interactivity.Interactions;
 using Remora.Rest.Core;
 
 namespace Remora.Discord.Samples.Interactivity;
@@ -128,9 +112,9 @@ public class Program
                     .AddCommandTree()
                         .WithCommandGroup<InteractiveCommands>()
                         .Finish()
-                    .AddInteractivity()
                     .AddPagination()
-                    .AddInteractiveEntity<ColourDropdownEntity>();
+                    .AddInteractionGroup<ColourDropdownInteractions>()
+                    .AddInteractionGroup<ModalInteractions>();
             }
         )
         .ConfigureLogging

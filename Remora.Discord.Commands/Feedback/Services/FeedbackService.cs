@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -684,6 +684,12 @@ public class FeedbackService
 
         return await SendAsync(dm.ID, content, embeds, options, ct);
     }
+
+    /// <summary>
+    /// Determines whether the feedback service has access to an interaction context.
+    /// </summary>
+    /// <returns>true if the feedback service has access to an interaction context; otherwise, false.</returns>
+    public bool HasInteractionContext() => _contextInjection.Context is InteractionContext;
 
     /// <summary>
     /// Sends an interaction response.

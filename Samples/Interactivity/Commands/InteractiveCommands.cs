@@ -1,23 +1,7 @@
 //
-//  InteractiveCommands.cs
-//
-//  Author:
-//       Jarl Gullberg <jarl.gullberg@gmail.com>
-//
-//  Copyright (c) 2017 Jarl Gullberg
-//
-//  This program is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU Lesser General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public License
-//  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//  SPDX-FileName: InteractiveCommands.cs
+//  SPDX-FileCopyrightText: Copyright (c) Jarl Gullberg
+//  SPDX-License-Identifier: MIT
 //
 
 using System.Linq;
@@ -25,11 +9,13 @@ using System.Threading.Tasks;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
 using Remora.Discord.API.Abstractions.Objects;
+using Remora.Discord.API.Abstractions.Rest;
 using Remora.Discord.API.Objects;
+using Remora.Discord.Commands.Attributes;
 using Remora.Discord.Commands.Contexts;
 using Remora.Discord.Commands.Feedback.Messages;
 using Remora.Discord.Commands.Feedback.Services;
-using Remora.Discord.Interactivity.Services;
+using Remora.Discord.Interactivity;
 using Remora.Discord.Pagination.Extensions;
 using Remora.Results;
 
@@ -43,24 +29,24 @@ public class InteractiveCommands : CommandGroup
 {
     private readonly ICommandContext _context;
     private readonly FeedbackService _feedback;
-    private readonly InteractiveMessageService _interactiveMessages;
+    private readonly IDiscordRestInteractionAPI _interactionAPI;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="InteractiveCommands"/> class.
     /// </summary>
     /// <param name="context">The command context.</param>
-    /// <param name="interactiveMessages">The interactive message service.</param>
     /// <param name="feedback">The feedback service.</param>
+    /// <param name="interactionAPI">The interaction API.</param>
     public InteractiveCommands
     (
         ICommandContext context,
-        InteractiveMessageService interactiveMessages,
-        FeedbackService feedback
+        FeedbackService feedback,
+        IDiscordRestInteractionAPI interactionAPI
     )
     {
         _context = context;
-        _interactiveMessages = interactiveMessages;
         _feedback = feedback;
+        _interactionAPI = interactionAPI;
     }
 
     /// <summary>
@@ -93,7 +79,7 @@ public class InteractiveCommands : CommandGroup
             (c, i) => new Embed(Image: new EmbedImage(i), Description: c)
         ).ToList();
 
-        return await _interactiveMessages.SendContextualPaginatedMessageAsync
+        return await _feedback.SendContextualPaginatedMessageAsync
         (
             _context.User.ID,
             pages,
@@ -115,7 +101,7 @@ public class InteractiveCommands : CommandGroup
             {
                 new SelectMenuComponent
                 (
-                    "colour-dropdown",
+                    CustomIDHelpers.CreateSelectMenuID("colour-dropdown"),
                     new ISelectOption[]
                     {
                         new SelectOption("Red", "#FF0000"),
@@ -135,5 +121,98 @@ public class InteractiveCommands : CommandGroup
         });
 
         return await _feedback.SendContextualEmbedAsync(embed, options, this.CancellationToken);
+    }
+
+    /// <summary>
+    /// Sends an embed with a dropdown.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    [Command("typed-dropdown")]
+    public async Task<IResult> SendTypedDropdownAsync()
+    {
+        var embed = new Embed(Description: "Select an emoji below.");
+        var options = new FeedbackMessageOptions(MessageComponents: new IMessageComponent[]
+        {
+            new ActionRowComponent(new[]
+            {
+                new SelectMenuComponent
+                (
+                    CustomIDHelpers.CreateSelectMenuID("typed-dropdown"),
+                    new ISelectOption[]
+                    {
+                        new SelectOption("Sweden", "🇸🇪", Emoji: new PartialEmoji(Name: "🇸🇪")),
+                        new SelectOption("Robot", "🤖", Emoji: new PartialEmoji(Name: "🤖")),
+                        new SelectOption("Shark", "🦈", Emoji: new PartialEmoji(Name: "🦈"))
+                    },
+                    "Emojis...",
+                    1,
+                    1
+                )
+            })
+        });
+
+        return await _feedback.SendContextualEmbedAsync(embed, options, this.CancellationToken);
+    }
+
+    /// <summary>
+    /// Shows a modal.
+    /// </summary>
+    /// <returns>A result, indicating if the modal was sent successfully.</returns>
+    [Command("modal")]
+    [SuppressInteractionResponse(true)]
+    public async Task<Result> ShowModalAsync()
+    {
+        if (_context is not InteractionContext interactionContext)
+        {
+            return (Result)await _feedback.SendContextualWarningAsync
+            (
+                "This command can only be used with slash commands.",
+                _context.User.ID,
+                new FeedbackMessageOptions(MessageFlags: MessageFlags.Ephemeral)
+            );
+        }
+
+        var response = new InteractionResponse
+        (
+            InteractionCallbackType.Modal,
+            new
+            (
+                new InteractionModalCallbackData
+                (
+                    CustomIDHelpers.CreateModalID("modal"),
+                    "Test Modal",
+                    new[]
+                    {
+                        new ActionRowComponent
+                        (
+                            new[]
+                            {
+                                new TextInputComponent
+                                (
+                                    "modal-text-input",
+                                    TextInputStyle.Short,
+                                    "Short Text",
+                                    1,
+                                    32,
+                                    true,
+                                    string.Empty,
+                                    "Short Text here"
+                                )
+                            }
+                        )
+                    }
+                )
+            )
+        );
+
+        var result = await _interactionAPI.CreateInteractionResponseAsync
+        (
+            interactionContext.ID,
+            interactionContext.Token,
+            response,
+            ct: this.CancellationToken
+        );
+
+        return result;
     }
 }

@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -38,7 +38,7 @@ public interface ICacheProvider
     /// Caches a value in the backing store.
     /// </summary>
     /// <param name="key">The key to cache the value with.</param>
-    /// <param name="instance">The instance of the object ot cache.</param>
+    /// <param name="instance">The instance of the object to cache.</param>
     /// <param name="absoluteExpiration">The absolute expiration of the value to cache.</param>
     /// <param name="slidingExpiration">The sliding expiration of the value to cache.</param>
     /// <param name="ct">A cancellation token to cancel the operation.</param>

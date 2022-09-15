@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -26,54 +26,66 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Humanizer;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Remora.Commands.Services;
+using Remora.Commands.Tokenization;
+using Remora.Commands.Trees;
 using Remora.Discord.API.Abstractions.Gateway.Events;
 using Remora.Discord.API.Abstractions.Objects;
 using Remora.Discord.API.Abstractions.Rest;
 using Remora.Discord.API.Objects;
+using Remora.Discord.Commands.Attributes;
 using Remora.Discord.Commands.Contexts;
 using Remora.Discord.Commands.Extensions;
 using Remora.Discord.Commands.Services;
 using Remora.Discord.Gateway.Responders;
 using Remora.Results;
 
-namespace Remora.Discord.Interactivity.Responders;
+namespace Remora.Discord.Interactivity;
 
 /// <summary>
 /// Handles dispatch of interaction events to interested entities.
 /// </summary>
 internal sealed class InteractivityResponder : IResponder<IInteractionCreate>
 {
-    private readonly IMemoryCache _cache;
     private readonly ContextInjectionService _contextInjectionService;
     private readonly IDiscordRestInteractionAPI _interactionAPI;
     private readonly IServiceProvider _services;
     private readonly InteractivityResponderOptions _options;
+    private readonly CommandService _commandService;
+
+    private readonly TokenizerOptions _tokenizerOptions;
+    private readonly TreeSearchOptions _treeSearchOptions;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="InteractivityResponder"/> class.
     /// </summary>
+    /// <param name="commandService">The command service.</param>
+    /// <param name="options">The responder options.</param>
+    /// <param name="interactionAPI">The interaction API.</param>
     /// <param name="services">The available services.</param>
     /// <param name="contextInjectionService">The context injection service.</param>
-    /// <param name="cache">The memory cache.</param>
-    /// <param name="interactionAPI">The interaction API.</param>
-    /// <param name="options">The responder options.</param>
+    /// <param name="tokenizerOptions">The tokenizer options.</param>
+    /// <param name="treeSearchOptions">The tree search options.</param>
     public InteractivityResponder
     (
+        CommandService commandService,
+        IOptions<InteractivityResponderOptions> options,
+        IDiscordRestInteractionAPI interactionAPI,
         IServiceProvider services,
         ContextInjectionService contextInjectionService,
-        IMemoryCache cache,
-        IDiscordRestInteractionAPI interactionAPI,
-        IOptions<InteractivityResponderOptions> options
+        IOptions<TokenizerOptions> tokenizerOptions,
+        IOptions<TreeSearchOptions> treeSearchOptions
     )
     {
         _services = services;
         _contextInjectionService = contextInjectionService;
-        _cache = cache;
         _interactionAPI = interactionAPI;
+        _commandService = commandService;
         _options = options.Value;
+
+        _tokenizerOptions = tokenizerOptions.Value;
+        _treeSearchOptions = treeSearchOptions.Value;
     }
 
     /// <inheritdoc />
@@ -105,52 +117,6 @@ internal sealed class InteractivityResponder : IResponder<IInteractionCreate>
                 : Result.FromSuccess();
     }
 
-    private async Task<Result> HandleModalInteractionAsync
-    (
-        InteractionContext context,
-        IModalSubmitData data,
-        CancellationToken ct = default
-    )
-    {
-        if (!_options.SuppressAutomaticResponses)
-        {
-            var response = new InteractionResponse(InteractionCallbackType.DeferredUpdateMessage);
-            var createResponse = await _interactionAPI.CreateInteractionResponseAsync
-            (
-                context.ID,
-                context.Token,
-                response,
-                ct: ct
-            );
-
-            if (!createResponse.IsSuccess)
-            {
-                return createResponse;
-            }
-        }
-
-        var interactionResults = await RunEntityHandlersAsync<IModalInteractiveEntity>
-        (
-            null,
-            data.CustomID,
-            (entity, c) => entity.HandleInteractionAsync(context.User, data.CustomID, data.Components, c),
-            ct
-        );
-
-        if (!interactionResults.Any())
-        {
-            return new NotFoundError
-            (
-                "No interested interactive entities were found. Did you forget to add any entities interested " +
-                $"in modal submissions (with the ID {data.CustomID}) to the service collection?"
-            );
-        }
-
-        return interactionResults.All(r => r.IsSuccess)
-            ? Result.FromSuccess()
-            : new AggregateError(interactionResults.Where(r => !r.IsSuccess).Cast<IResult>().ToArray());
-    }
-
     private async Task<Result> HandleComponentInteractionAsync
     (
         InteractionContext context,
@@ -158,6 +124,12 @@ internal sealed class InteractivityResponder : IResponder<IInteractionCreate>
         CancellationToken ct = default
     )
     {
+        if (!data.CustomID.StartsWith(Constants.InteractionTree))
+        {
+            // Not a component we handle
+            return Result.FromSuccess();
+        }
+
         if (data.ComponentType is ComponentType.SelectMenu)
         {
             if (!data.Values.HasValue)
@@ -166,7 +138,156 @@ internal sealed class InteractivityResponder : IResponder<IInteractionCreate>
             }
         }
 
-        if (!_options.SuppressAutomaticResponses)
+        var commandPath = data.CustomID[Constants.InteractionTree.Length..][2..]
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        var buildParameters = data.ComponentType switch
+        {
+            ComponentType.Button => new Dictionary<string, IReadOnlyList<string>>(),
+            ComponentType.SelectMenu => Result<IReadOnlyDictionary<string, IReadOnlyList<string>>>.FromSuccess
+            (
+                new Dictionary<string, IReadOnlyList<string>>
+                {
+                    { "values", data.Values.Value }
+                }
+            ),
+            _ => new InvalidOperationError("An unsupported component type was encountered.")
+        };
+
+        if (!buildParameters.IsSuccess)
+        {
+            return (Result)buildParameters;
+        }
+
+        var parameters = buildParameters.Entity;
+
+        return await TryExecuteInteractionCommandAsync(context, commandPath, parameters, ct);
+    }
+
+    private async Task<Result> HandleModalInteractionAsync
+    (
+        InteractionContext context,
+        IModalSubmitData data,
+        CancellationToken ct = default
+    )
+    {
+        if (!data.CustomID.StartsWith(Constants.InteractionTree))
+        {
+            // Not a component we handle
+            return Result.FromSuccess();
+        }
+
+        var commandPath = data.CustomID[Constants.InteractionTree.Length..][2..]
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        var parameters = ExtractParameters(data.Components);
+
+        return await TryExecuteInteractionCommandAsync
+        (
+            context,
+            commandPath,
+            parameters,
+            ct
+        );
+    }
+
+    private static IReadOnlyDictionary<string, IReadOnlyList<string>> ExtractParameters
+    (
+        IEnumerable<IPartialMessageComponent> components
+    )
+    {
+        var parameters = new Dictionary<string, IReadOnlyList<string>>();
+        foreach (var component in components)
+        {
+            if (component is IPartialActionRowComponent actionRow)
+            {
+                if (!actionRow.Components.IsDefined(out var rowComponents))
+                {
+                    continue;
+                }
+
+                var nestedComponents = ExtractParameters(rowComponents);
+                foreach (var nestedComponent in nestedComponents)
+                {
+                    parameters.Add(nestedComponent.Key, nestedComponent.Value);
+                }
+
+                continue;
+            }
+
+            switch (component)
+            {
+                case IPartialTextInputComponent textInput:
+                {
+                    if (!textInput.CustomID.IsDefined(out var id))
+                    {
+                        continue;
+                    }
+
+                    if (!textInput.Value.IsDefined(out var value))
+                    {
+                        continue;
+                    }
+
+                    parameters.Add(id.Replace('-', '_').Camelize(), new[] { value });
+                    break;
+                }
+                case IPartialSelectMenuComponent selectMenu:
+                {
+                    if (!selectMenu.CustomID.IsDefined(out var id))
+                    {
+                        continue;
+                    }
+
+                    if (!selectMenu.Options.IsDefined(out var options))
+                    {
+                        continue;
+                    }
+
+                    var values = options.Where(op => op.Value.HasValue).Select(op => op.Value.Value).ToList();
+
+                    parameters.Add(id.Replace('-', '_').Camelize(), values);
+                    break;
+                }
+            }
+        }
+
+        return parameters;
+    }
+
+    private async Task<Result> TryExecuteInteractionCommandAsync
+    (
+        InteractionContext context,
+        IReadOnlyList<string> commandPath,
+        IReadOnlyDictionary<string, IReadOnlyList<string>> parameters,
+        CancellationToken ct
+    )
+    {
+        var prepareCommand = await _commandService.TryPrepareCommandAsync
+        (
+            commandPath,
+            parameters,
+            _services,
+            searchOptions: _treeSearchOptions,
+            tokenizerOptions: _tokenizerOptions,
+            treeName: Constants.InteractionTree,
+            ct: ct
+        );
+
+        if (!prepareCommand.IsSuccess)
+        {
+            return (Result)prepareCommand;
+        }
+
+        var preparedCommand = prepareCommand.Entity;
+
+        var suppressResponseAttribute = preparedCommand.Command.Node
+            .FindCustomAttributeOnLocalTree<SuppressInteractionResponseAttribute>();
+
+        var shouldSendResponse = !(suppressResponseAttribute?.Suppress ?? _options.SuppressAutomaticResponses);
+
+        // ReSharper disable once InvertIf
+        if (shouldSendResponse)
         {
             var response = new InteractionResponse(InteractionCallbackType.DeferredUpdateMessage);
             var createResponse = await _interactionAPI.CreateInteractionResponseAsync
@@ -183,182 +304,12 @@ internal sealed class InteractivityResponder : IResponder<IInteractionCreate>
             }
         }
 
-        IReadOnlyList<Result> interactionResults;
-        switch (data.ComponentType)
-        {
-            case ComponentType.Button:
-            {
-                interactionResults = await RunEntityHandlersAsync<IButtonInteractiveEntity>
-                (
-                    data.ComponentType,
-                    data.CustomID,
-                    (entity, c) => entity.HandleInteractionAsync(context.User, data.CustomID, c),
-                    ct
-                );
-
-                break;
-            }
-            case ComponentType.SelectMenu:
-            {
-                interactionResults = await RunEntityHandlersAsync<ISelectMenuInteractiveEntity>
-                (
-                    data.ComponentType,
-                    data.CustomID,
-                    (entity, c) => entity.HandleInteractionAsync(context.User, data.CustomID, data.Values.Value, c),
-                    ct
-                );
-
-                break;
-            }
-            case ComponentType.ActionRow:
-            default:
-            {
-                return new InvalidOperationError("An unsupported component type was encountered.");
-            }
-        }
-
-        if (!interactionResults.Any())
-        {
-            return new NotFoundError
-            (
-                "No interested interactive entities were found. Did you forget to add any entities interested " +
-                $"in {data.ComponentType.Humanize().ToLowerInvariant()} components (with the ID {data.CustomID}) to " +
-                "the service collection?"
-            );
-        }
-
-        return interactionResults.All(r => r.IsSuccess)
-            ? Result.FromSuccess()
-            : new AggregateError(interactionResults.Where(r => !r.IsSuccess).Cast<IResult>().ToArray());
-    }
-
-    private async Task<IReadOnlyList<Result>> RunEntityHandlersAsync<TEntity>
-    (
-        ComponentType? componentType,
-        string customID,
-        Func<TEntity, CancellationToken, Task<Result>> handler,
-        CancellationToken ct = default
-    )
-        where TEntity : class, IInteractiveEntity
-    {
-        var entities = _services.GetServices<TEntity>();
-
-        // Null in this list signifies no interest
-        var results = await Task.WhenAll(entities.Select<TEntity, Task<Result?>>(async entity =>
-        {
-            if (entity is InMemoryPersistentInteractiveEntity persistentEntity)
-            {
-                return await RunPersistentEntityHandlerAsync
-                (
-                    persistentEntity,
-                    componentType,
-                    customID,
-                    handler,
-                    ct
-                );
-            }
-
-            // It's fine to run without synchronization
-            try
-            {
-                var determineInterest = await entity.IsInterestedAsync(componentType, customID, ct);
-                if (!determineInterest.IsSuccess)
-                {
-                    return (Result)determineInterest;
-                }
-
-                if (determineInterest.IsDefined(out var isInterested) && !isInterested)
-                {
-                    return null;
-                }
-
-                return await handler(entity, ct);
-            }
-            catch (Exception e)
-            {
-                return e;
-            }
-        }));
-
-        return results.Where(r => r is not null).Select(r => r!.Value).ToList();
-    }
-
-    private async Task<Result?> RunPersistentEntityHandlerAsync<TEntity>
-    (
-        InMemoryPersistentInteractiveEntity entity,
-        ComponentType? componentType,
-        string customID,
-        Func<TEntity, CancellationToken, Task<Result>> handler,
-        CancellationToken ct
-    )
-        where TEntity : class, IInteractiveEntity
-    {
-        var dataKey = InMemoryPersistenceHelpers.CreateNonceKey(entity.Nonce);
-        if (!_cache.TryGetValue<(SemaphoreSlim, object)>(dataKey, out var value))
-        {
-            return new NotFoundError
-            (
-                "No persistent data found for an interactive entity. Did you forget to initialize one when sending " +
-                "the original message?"
-            );
-        }
-
-        var (semaphore, data) = value;
-
-        // Figure out the real data type the entity wants
-        var entityDataType = entity.DataType;
-
-        if (!entityDataType.IsInstanceOfType(data))
-        {
-            // This is a certified "oops" moment
-            return new InvalidOperationError
-            (
-                "The cached persistent data was not compatible with the data type required by the entity that " +
-                "requested it. Bug or API misuse?"
-            );
-        }
-
-        entity.UntypedData = data;
-        var determineInterest = await entity.IsInterestedAsync(componentType, customID, ct);
-        if (!determineInterest.IsSuccess)
-        {
-            return (Result)determineInterest;
-        }
-
-        if (determineInterest.IsDefined(out var isInterested) && !isInterested)
-        {
-            return null;
-        }
-
-        Result interactionResult;
-        try
-        {
-            // Only one entity instance may operate on an in-memory data object at a time
-            await semaphore.WaitAsync(ct);
-            interactionResult = await handler((entity as TEntity)!, ct);
-
-            if (interactionResult.IsSuccess)
-            {
-                _cache.Set(dataKey, (semaphore, entity.UntypedData));
-            }
-        }
-        catch (Exception e)
-        {
-            return e;
-        }
-        finally
-        {
-            if (entity.DeleteData)
-            {
-                _cache.Remove(dataKey);
-                semaphore.Dispose();
-            }
-            else
-            {
-                semaphore.Release();
-            }
-        }
-
-        return interactionResult;
+        // Run the actual command
+        return (Result)await _commandService.TryExecuteAsync
+        (
+            preparedCommand,
+            _services,
+            ct
+        );
     }
 }

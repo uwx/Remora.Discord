@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -178,6 +178,11 @@ public interface IMessage : IPartialMessage
     /// </summary>
     new Optional<IReadOnlyList<IStickerItem>> StickerItems { get; }
 
+    /// <summary>
+    /// Gets the approximate position of the message within the thread. Duplicates and gaps are possible.
+    /// </summary>
+    new Optional<int> Position { get; }
+
     /// <inheritdoc/>
     Optional<Snowflake> IPartialMessage.ID => this.ID;
 
@@ -258,4 +263,7 @@ public interface IMessage : IPartialMessage
 
     /// <inheritdoc/>
     Optional<IReadOnlyList<IStickerItem>> IPartialMessage.StickerItems => this.StickerItems;
+
+    /// <inheritdoc/>
+    Optional<int> IPartialMessage.Position => this.Position;
 }

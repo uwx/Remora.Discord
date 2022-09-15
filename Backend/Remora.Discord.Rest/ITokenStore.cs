@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -34,4 +34,9 @@ public interface ITokenStore
     /// Gets the token.
     /// </summary>
     string Token { get; }
+
+    /// <summary>
+    /// Gets the type of the token.
+    /// </summary>
+    DiscordTokenType TokenType { get; }
 }

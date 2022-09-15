@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -23,6 +23,7 @@
 using System.Collections.Generic;
 using Remora.Discord.API.Abstractions.Objects;
 using Remora.Discord.API.Objects;
+using Remora.Discord.Interactivity;
 using Remora.Rest.Core;
 
 namespace Remora.Discord.Pagination;
@@ -34,6 +35,11 @@ internal sealed class PaginatedMessageData
 {
     private readonly IReadOnlyList<Embed> _pages;
     private int _currentPage;
+
+    /// <summary>
+    /// Gets a value indicating whether the paginated message was created as part of an interaction.
+    /// </summary>
+    public bool IsInteractionDriven { get; }
 
     /// <summary>
     /// Gets the appearance options for the message.
@@ -48,11 +54,15 @@ internal sealed class PaginatedMessageData
     /// <summary>
     /// Initializes a new instance of the <see cref="PaginatedMessageData"/> class.
     /// </summary>
+    /// <param name="isInteractionDriven">
+    /// Indicates whether the paginated message was created as part of an interaction.
+    /// </param>
     /// <param name="sourceUserID">The ID of the source user.</param>
     /// <param name="pages">The pages in the paginated message.</param>
     /// <param name="appearance">The appearance options.</param>
     public PaginatedMessageData
     (
+        bool isInteractionDriven,
         Snowflake sourceUserID,
         IReadOnlyList<Embed> pages,
         PaginatedAppearanceOptions? appearance = null
@@ -61,6 +71,7 @@ internal sealed class PaginatedMessageData
         appearance ??= PaginatedAppearanceOptions.Default;
 
         _pages = pages;
+        this.IsInteractionDriven = isInteractionDriven;
         _currentPage = 0;
 
         this.SourceUserID = sourceUserID;
@@ -147,18 +158,40 @@ internal sealed class PaginatedMessageData
     {
         return new[]
         {
-            new ActionRowComponent(new[]
-            {
-                this.Appearance.First with { IsDisabled = _currentPage == 0 },
-                this.Appearance.Previous with { IsDisabled = _currentPage == 0 },
-                this.Appearance.Next with { IsDisabled = _currentPage == _pages.Count - 1 },
-                this.Appearance.Last with { IsDisabled = _currentPage == _pages.Count - 1 }
-            }),
-            new ActionRowComponent(new[]
-            {
-                this.Appearance.Close,
-                this.Appearance.Help
-            })
+            new ActionRowComponent
+            (
+                new[]
+                {
+                    this.Appearance.First with
+                    {
+                        CustomID = CustomIDHelpers.CreateButtonID("first"),
+                        IsDisabled = _currentPage == 0
+                    },
+                    this.Appearance.Previous with
+                    {
+                        CustomID = CustomIDHelpers.CreateButtonID("previous"),
+                        IsDisabled = _currentPage == 0
+                    },
+                    this.Appearance.Next with
+                    {
+                        CustomID = CustomIDHelpers.CreateButtonID("next"),
+                        IsDisabled = _currentPage == _pages.Count - 1
+                    },
+                    this.Appearance.Last with
+                    {
+                        CustomID = CustomIDHelpers.CreateButtonID("last"),
+                        IsDisabled = _currentPage == _pages.Count - 1
+                    }
+                }
+            ),
+            new ActionRowComponent
+            (
+                new[]
+                {
+                    this.Appearance.Close with { CustomID = CustomIDHelpers.CreateButtonID("close") },
+                    this.Appearance.Help with { CustomID = CustomIDHelpers.CreateButtonID("help") }
+                }
+            )
         };
     }
 }

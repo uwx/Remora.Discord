@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -36,7 +36,7 @@ public static partial class Markdown
     /// <summary>
     /// A collection of sensitive characters.
     /// </summary>
-    private static readonly string[] SensitiveCharacters = { "\\", "*", "_", "~", "`", "|", ">" };
+    private static readonly string[] _sensitiveCharacters = { "\\", "*", "_", "~", "`", "|", ">" };
 
     /// <summary>
     /// Formats a string to use Markdown Bold formatting.
@@ -195,5 +195,5 @@ public static partial class Markdown
     /// <returns>
     /// A sanitized string.
     /// </returns>
-    public static string Sanitize(string text) => SensitiveCharacters.Aggregate(text, (current, unsafeChar) => current.Replace(unsafeChar, $@"\{unsafeChar}"));
+    public static string Sanitize(string text) => _sensitiveCharacters.Aggregate(text, (current, unsafeChar) => current.Replace(unsafeChar, $@"\{unsafeChar}"));
 }

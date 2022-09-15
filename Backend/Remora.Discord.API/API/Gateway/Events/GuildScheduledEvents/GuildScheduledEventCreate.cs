@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -24,7 +24,6 @@ using System;
 using JetBrains.Annotations;
 using Remora.Discord.API.Abstractions.Gateway.Events;
 using Remora.Discord.API.Abstractions.Objects;
-using Remora.Discord.API.Objects;
 using Remora.Rest.Core;
 
 namespace Remora.Discord.API.Gateway.Events;
@@ -49,22 +48,4 @@ public record GuildScheduledEventCreate
     Optional<IUser> Creator,
     Optional<int> UserCount,
     IImageHash? Image
-) : GuildScheduledEvent
-(
-    ID,
-    GuildID,
-    ChannelID,
-    CreatorID,
-    Name,
-    Description,
-    ScheduledStartTime,
-    ScheduledEndTime,
-    PrivacyLevel,
-    Status,
-    EntityType,
-    EntityID,
-    EntityMetadata,
-    Creator,
-    UserCount,
-    Image
-), IGuildScheduledEventCreate;
+) : IGuildScheduledEventCreate;

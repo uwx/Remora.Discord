@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -24,7 +24,10 @@ using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Remora.Discord.Gateway.Extensions;
 using Remora.Discord.Interactivity.Extensions;
+using Remora.Discord.Interactivity.Services;
+using Remora.Discord.Pagination.Interactions;
 using Remora.Discord.Pagination.Responders;
+using Remora.Rest.Core;
 
 namespace Remora.Discord.Pagination.Extensions;
 
@@ -42,8 +45,9 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddPagination(this IServiceCollection serviceCollection)
     {
         serviceCollection.AddInteractivity();
+        serviceCollection.AddSingleton(InMemoryDataService<Snowflake, PaginatedMessageData>.Instance);
         serviceCollection.AddResponder<MessageDeletedResponder>();
-        serviceCollection.AddInteractiveEntity<PaginatedMessageEntity>();
+        serviceCollection.AddInteractionGroup<PaginationInteractions>();
 
         return serviceCollection;
     }

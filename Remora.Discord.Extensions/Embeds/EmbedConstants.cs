@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -72,7 +72,7 @@ public static class EmbedConstants
     public const int MaxEmbedLength = 6000;
 
     /// <summary>
-    /// The default embed color.
+    /// Gets the default embed color.
     /// </summary>
-    public static readonly Color DefaultColour = Color.FromArgb(95, 186, 125);
+    public static Color DefaultColour { get; } = Color.FromArgb(95, 186, 125);
 }

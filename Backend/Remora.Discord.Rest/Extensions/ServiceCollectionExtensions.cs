@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -40,6 +40,7 @@ using Remora.Discord.API.Objects;
 using Remora.Discord.Caching.Abstractions.Services;
 using Remora.Discord.Rest.API;
 using Remora.Discord.Rest.Caching;
+using Remora.Discord.Rest.Handlers;
 using Remora.Discord.Rest.Polly;
 using Remora.Rest;
 using Remora.Rest.Extensions;
@@ -56,13 +57,13 @@ public static class ServiceCollectionExtensions
     /// Adds the services required for Discord's REST API.
     /// </summary>
     /// <param name="serviceCollection">The service collection.</param>
-    /// <param name="tokenFactory">A function that creates or retrieves the authorization token.</param>
+    /// <param name="tokenFactory">A function that creates or retrieves the authorization token and its token type.</param>
     /// <param name="buildClient">Extra client building operations.</param>
     /// <returns>The service collection, with the services added.</returns>
     public static IServiceCollection AddDiscordRest
     (
         this IServiceCollection serviceCollection,
-        Func<IServiceProvider, string> tokenFactory,
+        Func<IServiceProvider, (string Token, DiscordTokenType TokenType)> tokenFactory,
         Action<IHttpClientBuilder>? buildClient = null
     )
     {
@@ -74,7 +75,12 @@ public static class ServiceCollectionExtensions
         serviceCollection.ConfigureDiscordJsonConverters();
 
         serviceCollection
-            .AddSingleton<ITokenStore>(serviceProvider => new TokenStore(tokenFactory(serviceProvider)));
+            .AddSingleton<ITokenStore>(serviceProvider =>
+            {
+                var (token, tokenType) = tokenFactory(serviceProvider);
+                return new TokenStore(token, tokenType);
+            })
+            .AddTransient<TokenAuthorizationHandler>();
 
         serviceCollection.TryAddTransient<IDiscordRestAuditLogAPI>(s => new DiscordRestAuditLogAPI
         (
@@ -192,37 +198,23 @@ public static class ServiceCollectionExtensions
         var retryDelay = Backoff.DecorrelatedJitterBackoffV2(TimeSpan.FromSeconds(1), 5);
         var clientBuilder = serviceCollection
             .AddRestHttpClient<RestError>("Discord")
-            .ConfigureHttpClient((services, client) =>
+            .ConfigureHttpClient((_, client) =>
             {
                 var assemblyName = Assembly.GetExecutingAssembly().GetName();
                 var name = assemblyName.Name ?? "Remora.Discord";
                 var version = assemblyName.Version ?? new Version(1, 0, 0);
-
-                var tokenStore = services.GetRequiredService<ITokenStore>();
 
                 client.BaseAddress = Constants.BaseURL;
                 client.DefaultRequestHeaders.UserAgent.Add
                 (
                     new ProductInfoHeaderValue(name, version.ToString())
                 );
-
-                var token = tokenStore.Token;
-                if (string.IsNullOrWhiteSpace(token))
-                {
-                    throw new InvalidOperationException("The authentication token has to contain something.");
-                }
-
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue
-                (
-                    "Bot",
-                    token
-                );
             })
+            .AddHttpMessageHandler<TokenAuthorizationHandler>()
             .AddTransientHttpErrorPolicy
             (
                 b => b
                     .WaitAndRetryAsync(retryDelay)
-                    .WrapAsync(rateLimitPolicy)
             )
             .AddPolicyHandler
             (
@@ -242,6 +234,7 @@ public static class ServiceCollectionExtensions
                         },
                         (_, _, _, _) => Task.CompletedTask
                     )
+                    .WrapAsync(rateLimitPolicy)
             );
 
         // Run extra user-provided client building operations.

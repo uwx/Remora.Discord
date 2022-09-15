@@ -1,20 +1,12 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Remora.Sdk/1.1.1">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.1;net5.0;net6.0</TargetFrameworks>
-    </PropertyGroup>
-
-    <PropertyGroup>
-        <Version>4.2.6</Version>
-        <Description>Utilities and components which extened upon Remora.Discord's base resources</Description>
+        <VersionPrefix>5.1.0</VersionPrefix>
+        <Description>Utilities and components which extend upon Remora.Discord's base resources</Description>
         <PackageReleaseNotes>
-            Update dependencies.
+            Implement support for slash command mentions.
         </PackageReleaseNotes>
     </PropertyGroup>
-
-    <ItemGroup>
-        <PackageReference Include="Remora.Results" Version="7.2.0" />
-    </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Backend\Remora.Discord.API\Remora.Discord.API.csproj" />

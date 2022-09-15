@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -248,6 +248,50 @@ public class InteractionDataExtensionsTests
 
             Assert.Single(parameters["d"]);
             Assert.Equal("2", parameters["d"][0]);
+        }
+
+        /// <summary>
+        /// Tests whether the method performs as expected in a single case.
+        /// </summary>
+        [Fact]
+        public void CanUnpackUserCommand()
+        {
+            var command = new ApplicationCommandData
+            (
+                DiscordSnowflake.New(0),
+                "user",
+                ApplicationCommandType.User,
+                TargetID: DiscordSnowflake.New(1)
+            );
+
+            command.UnpackInteraction(out var commandPath, out var parameters);
+
+            Assert.Equal(new[] { "user" }, commandPath);
+            Assert.Equal(1, parameters.Count);
+            Assert.True(parameters.ContainsKey("user"));
+            Assert.Equal("1", parameters["user"][0]);
+        }
+
+        /// <summary>
+        /// Tests whether the method performs as expected in a single case.
+        /// </summary>
+        [Fact]
+        public void CanUnpackMessageCommand()
+        {
+            var command = new ApplicationCommandData
+            (
+                DiscordSnowflake.New(0),
+                "message",
+                ApplicationCommandType.Message,
+                TargetID: DiscordSnowflake.New(1)
+            );
+
+            command.UnpackInteraction(out var commandPath, out var parameters);
+
+            Assert.Equal(new[] { "message" }, commandPath);
+            Assert.Equal(1, parameters.Count);
+            Assert.True(parameters.ContainsKey("message"));
+            Assert.Equal("1", parameters["message"][0]);
         }
     }
 }

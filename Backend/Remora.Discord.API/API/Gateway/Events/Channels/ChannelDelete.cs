@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -25,7 +25,6 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using Remora.Discord.API.Abstractions.Gateway.Events;
 using Remora.Discord.API.Abstractions.Objects;
-using Remora.Discord.API.Objects;
 using Remora.Rest.Core;
 
 namespace Remora.Discord.API.Gateway.Events.Channels;
@@ -59,33 +58,7 @@ public record ChannelDelete
     Optional<IThreadMetadata> ThreadMetadata = default,
     Optional<IThreadMember> Member = default,
     Optional<AutoArchiveDuration> DefaultAutoArchiveDuration = default,
-    Optional<IDiscordPermissionSet> Permissions = default
-) : Channel
-(
-    ID,
-    Type,
-    GuildID,
-    Position,
-    PermissionOverwrites,
-    Name,
-    Topic,
-    IsNsfw,
-    LastMessageID,
-    Bitrate,
-    UserLimit,
-    RateLimitPerUser,
-    Recipients,
-    Icon,
-    OwnerID,
-    ApplicationID,
-    ParentID,
-    LastPinTimestamp,
-    RTCRegion,
-    VideoQualityMode,
-    MessageCount,
-    MemberCount,
-    ThreadMetadata,
-    Member,
-    DefaultAutoArchiveDuration,
-    Permissions
-), IChannelDelete;
+    Optional<IDiscordPermissionSet> Permissions = default,
+    Optional<ChannelFlags> Flags = default,
+    Optional<int> TotalMessageSent = default
+) : IChannelDelete;

@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -44,6 +44,7 @@ using Remora.Discord.Gateway.Transport;
 using Remora.Discord.Tests;
 using Remora.Results;
 using Xunit;
+using Xunit.Abstractions;
 
 // ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local
 namespace Remora.Discord.Gateway.Tests.Tests;
@@ -53,6 +54,17 @@ namespace Remora.Discord.Gateway.Tests.Tests;
 /// </summary>
 public class DiscordGatewayClientTests
 {
+    private readonly ITestOutputHelper _testOutput;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DiscordGatewayClientTests"/> class.
+    /// </summary>
+    /// <param name="testOutput">The output helper.</param>
+    public DiscordGatewayClientTests(ITestOutputHelper testOutput)
+    {
+        _testOutput = testOutput;
+    }
+
     /// <summary>
     /// Tests whether the client can send the correct sequence of events in order to connect normally.
     /// </summary>
@@ -61,9 +73,8 @@ public class DiscordGatewayClientTests
     public async Task CanConnectAsync()
     {
         var tokenSource = new CancellationTokenSource();
-        var transportMock = new MockedTransportServiceBuilder()
+        var transportMock = new MockedTransportServiceBuilder(_testOutput)
             .WithTimeout(TimeSpan.FromSeconds(30))
-            .IgnoreUnexpected()
             .Sequence
             (
                 s => s
@@ -85,6 +96,7 @@ public class DiscordGatewayClientTests
                             Constants.BotUser,
                             new List<IUnavailableGuild>(),
                             "mock-session",
+                            Constants.MockResumeGatewayUrl,
                             default,
                             new PartialApplication()
                         )
@@ -122,9 +134,8 @@ public class DiscordGatewayClientTests
     public async Task CanReconnectAndResumeAsync()
     {
         var tokenSource = new CancellationTokenSource();
-        var transportMock = new MockedTransportServiceBuilder()
+        var transportMock = new MockedTransportServiceBuilder(_testOutput)
             .WithTimeout(TimeSpan.FromSeconds(30))
-            .IgnoreUnexpected()
             .Sequence
             (
                 s => s
@@ -146,13 +157,14 @@ public class DiscordGatewayClientTests
                             Constants.BotUser,
                             new List<IUnavailableGuild>(),
                             Constants.MockSessionID,
+                            Constants.MockResumeGatewayUrl,
                             default,
                             new PartialApplication()
                         )
                     )
                     .Send<Reconnect>()
                     .ExpectDisconnect()
-                    .ExpectConnection(new Uri($"wss://gateway.discord.gg/?v={(int)DiscordAPIVersion.V10}&encoding=json"))
+                    .ExpectConnection(new Uri($"{Constants.MockResumeGatewayUrl}?v={(int)DiscordAPIVersion.V10}&encoding=json"))
                     .Send(new Hello(TimeSpan.FromMilliseconds(200)))
                     .Expect<Resume>
                     (
@@ -196,9 +208,8 @@ public class DiscordGatewayClientTests
     public async Task CanReconnectAndCreateNewSessionAsync()
     {
         var tokenSource = new CancellationTokenSource();
-        var transportMock = new MockedTransportServiceBuilder()
+        var transportMock = new MockedTransportServiceBuilder(_testOutput)
             .WithTimeout(TimeSpan.FromSeconds(30))
-            .IgnoreUnexpected()
             .Sequence
             (
                 s => s
@@ -220,13 +231,14 @@ public class DiscordGatewayClientTests
                             Constants.BotUser,
                             new List<IUnavailableGuild>(),
                             Constants.MockSessionID,
+                            Constants.MockResumeGatewayUrl,
                             default,
                             new PartialApplication()
                         )
                     )
                     .Send<Reconnect>()
                     .ExpectDisconnect()
-                    .ExpectConnection(new Uri($"wss://gateway.discord.gg/?v={(int)DiscordAPIVersion.V10}&encoding=json"))
+                    .ExpectConnection(new Uri($"{Constants.MockResumeGatewayUrl}?v={(int)DiscordAPIVersion.V10}&encoding=json"))
                     .Send(new Hello(TimeSpan.FromMilliseconds(200)))
                     .Expect<Resume>
                     (
@@ -253,6 +265,7 @@ public class DiscordGatewayClientTests
                             Constants.BotUser,
                             new List<IUnavailableGuild>(),
                             Constants.MockSessionID,
+                            Constants.MockResumeGatewayUrl,
                             default,
                             new PartialApplication()
                         )
@@ -290,9 +303,8 @@ public class DiscordGatewayClientTests
     public async Task CanRetrySessionCreationIfInvalidatedAsync()
     {
         var tokenSource = new CancellationTokenSource();
-        var transportMock = new MockedTransportServiceBuilder()
+        var transportMock = new MockedTransportServiceBuilder(_testOutput)
             .WithTimeout(TimeSpan.FromSeconds(30))
-            .IgnoreUnexpected()
             .Sequence
             (
                 s => s
@@ -329,6 +341,7 @@ public class DiscordGatewayClientTests
                             Constants.BotUser,
                             new List<IUnavailableGuild>(),
                             Constants.MockSessionID,
+                            Constants.MockResumeGatewayUrl,
                             default,
                             new PartialApplication()
                         )
@@ -366,9 +379,8 @@ public class DiscordGatewayClientTests
     public async Task CanRetrySessionCreationIfReconnectRequestedAsync()
     {
         var tokenSource = new CancellationTokenSource();
-        var transportMock = new MockedTransportServiceBuilder()
+        var transportMock = new MockedTransportServiceBuilder(_testOutput)
             .WithTimeout(TimeSpan.FromSeconds(30))
-            .IgnoreUnexpected()
             .Sequence
             (
                 s => s
@@ -405,6 +417,7 @@ public class DiscordGatewayClientTests
                             Constants.BotUser,
                             new List<IUnavailableGuild>(),
                             Constants.MockSessionID,
+                            Constants.MockResumeGatewayUrl,
                             default,
                             new PartialApplication()
                         )
@@ -442,9 +455,8 @@ public class DiscordGatewayClientTests
     public async Task CanReconnectAfterExceptionAsync()
     {
         var tokenSource = new CancellationTokenSource();
-        var transportMock = new MockedTransportServiceBuilder()
+        var transportMock = new MockedTransportServiceBuilder(_testOutput)
             .WithTimeout(TimeSpan.FromSeconds(30))
-            .IgnoreUnexpected()
             .Sequence
             (
                 s => s
@@ -466,6 +478,7 @@ public class DiscordGatewayClientTests
                             Constants.BotUser,
                             Array.Empty<IUnavailableGuild>(),
                             Constants.MockSessionID,
+                            Constants.MockResumeGatewayUrl,
                             default,
                             new PartialApplication()
                         )
@@ -489,6 +502,7 @@ public class DiscordGatewayClientTests
                             Constants.BotUser,
                             Array.Empty<IUnavailableGuild>(),
                             Constants.MockSessionID,
+                            Constants.MockResumeGatewayUrl,
                             default,
                             new PartialApplication()
                         )
@@ -512,6 +526,7 @@ public class DiscordGatewayClientTests
                             Constants.BotUser,
                             Array.Empty<IUnavailableGuild>(),
                             Constants.MockSessionID,
+                            Constants.MockResumeGatewayUrl,
                             default,
                             new PartialApplication()
                         )

@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -139,7 +139,7 @@ public class AnsiStringBuilder
     /// </summary>
     private sealed class StyleState
     {
-        private const char EscapeChar = '\u001b';
+        private const char _escapeChar = '\u001b';
 
         private bool _hasChanged;
         private bool _isBold;
@@ -244,7 +244,7 @@ public class AnsiStringBuilder
 
             _hasChanged = false;
 
-            stringBuilder.Append($"{EscapeChar}[{AnsiStyle.Reset}");
+            stringBuilder.Append($"{_escapeChar}[{AnsiStyle.Reset}");
 
             if (this.IsBold)
             {

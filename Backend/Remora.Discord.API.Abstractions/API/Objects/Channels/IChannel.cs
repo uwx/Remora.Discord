@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -166,6 +166,17 @@ public interface IChannel : IPartialChannel
     /// </summary>
     new Optional<IDiscordPermissionSet> Permissions { get; }
 
+    /// <summary>
+    /// Gets the flags associated with the channel.
+    /// </summary>
+    new Optional<ChannelFlags> Flags { get; }
+
+    /// <summary>
+    /// Gets the total number of message sent in the thread. This field does not
+    /// decrement when messages are deleted.
+    /// </summary>
+    new Optional<int> TotalMessageSent { get; }
+
     /// <inheritdoc/>
     Optional<Snowflake> IPartialChannel.ID => this.ID;
 
@@ -243,4 +254,10 @@ public interface IChannel : IPartialChannel
 
     /// <inheritdoc/>
     Optional<IDiscordPermissionSet> IPartialChannel.Permissions => this.Permissions;
+
+    /// <inheritdoc/>
+    Optional<ChannelFlags> IPartialChannel.Flags => this.Flags;
+
+    /// <inheritdoc/>
+    Optional<int> IPartialChannel.TotalMessageSent => this.TotalMessageSent;
 }

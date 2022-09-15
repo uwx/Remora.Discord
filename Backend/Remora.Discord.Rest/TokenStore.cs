@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -33,12 +33,17 @@ public class TokenStore : ITokenStore
     /// <inheritdoc />
     public string Token { get; }
 
+    /// <inheritdoc />
+    public DiscordTokenType TokenType { get; }
+
     /// <summary>
     /// Initializes a new instance of the <see cref="TokenStore"/> class.
     /// </summary>
     /// <param name="token">The token to store.</param>
-    public TokenStore(string token)
+    /// <param name="tokenType">The type of token to store.</param>
+    public TokenStore(string token, DiscordTokenType tokenType)
     {
         this.Token = token;
+        this.TokenType = tokenType;
     }
 }

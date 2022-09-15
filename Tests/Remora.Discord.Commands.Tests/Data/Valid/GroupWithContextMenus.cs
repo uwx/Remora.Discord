@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -26,6 +26,7 @@ using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
 using Remora.Discord.API.Abstractions.Objects;
 using Remora.Discord.Commands.Attributes;
+using Remora.Rest.Core;
 using Remora.Results;
 
 #pragma warning disable CS1591, SA1600, SA1402, SA1602
@@ -41,4 +42,12 @@ public class GroupWithContextMenus : CommandGroup
     [Command("Do message thing")]
     [CommandType(ApplicationCommandType.Message)]
     public Task<IResult> MessageCommand() => throw new NotImplementedException();
+
+    [Command("Do user thing with parameter")]
+    [CommandType(ApplicationCommandType.User)]
+    public Task<IResult> UserCommandParameter(Snowflake user) => throw new NotImplementedException();
+
+    [Command("Do message thing with parameter")]
+    [CommandType(ApplicationCommandType.Message)]
+    public Task<IResult> MessageCommandParameter(Snowflake message) => throw new NotImplementedException();
 }

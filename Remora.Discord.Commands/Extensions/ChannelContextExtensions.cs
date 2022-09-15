@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -37,7 +37,7 @@ public static class ChannelContextExtensions
     /// <summary>
     /// Holds a mapping of channel contexts to their constituent channel types.
     /// </summary>
-    private static readonly IReadOnlyDictionary<ChannelContext, IReadOnlyList<ChannelType>> ChannelTypesMap =
+    private static readonly IReadOnlyDictionary<ChannelContext, IReadOnlyList<ChannelType>> _channelTypesMap =
         new Dictionary<ChannelContext, IReadOnlyList<ChannelType>>
         {
             {
@@ -47,10 +47,10 @@ public static class ChannelContextExtensions
                     GuildText,
                     GuildVoice,
                     GuildCategory,
-                    GuildNews,
-                    GuildPrivateThread,
-                    GuildPublicThread,
-                    GuildNewsThread,
+                    GuildAnnouncement,
+                    PrivateThread,
+                    PublicThread,
+                    AnnouncementThread,
                     GuildStageVoice
                 }
             },
@@ -77,6 +77,6 @@ public static class ChannelContextExtensions
     /// <returns>The channel context's channels types.</returns>
     public static IReadOnlyList<ChannelType> ToChannelTypes(this ChannelContext channelContext)
     {
-        return ChannelTypesMap[channelContext];
+        return _channelTypesMap[channelContext];
     }
 }

@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -25,7 +25,7 @@ using System;
 namespace Remora.Discord.Gateway.Tests.Transport.Events;
 
 /// <summary>
-/// Represents an exception occuring in server-to-client stream of the transport layer.
+/// Represents an exception occurring in server-to-client stream of the transport layer.
 /// </summary>
 public class SendExceptionEvent : IEvent
 {

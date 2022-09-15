@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -110,4 +110,10 @@ public interface IPartialChannel
 
     /// <inheritdoc cref="IChannel.Permissions" />
     Optional<IDiscordPermissionSet> Permissions { get; }
+
+    /// <inheritdoc cref="IChannel.Flags" />
+    Optional<ChannelFlags> Flags { get; }
+
+    /// <inheritdoc cref="IChannel.TotalMessageSent" />
+    Optional<int> TotalMessageSent { get; }
 }

@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -160,7 +160,9 @@ public class DiscordRestWebhookAPI : AbstractDiscordRestAPI, IDiscordRestWebhook
         return this.RestHttpClient.GetAsync<IWebhook>
         (
             $"webhooks/{webhookID}/{token}",
-            b => b.WithRateLimitContext(this.RateLimitCache),
+            b => b
+                .WithRateLimitContext(this.RateLimitCache)
+                .SkipAuthorization(),
             ct: ct
         );
     }
@@ -233,7 +235,8 @@ public class DiscordRestWebhookAPI : AbstractDiscordRestAPI, IDiscordRestWebhook
                     }
                 )
                 .AddAuditLogReason(reason)
-                .WithRateLimitContext(this.RateLimitCache),
+                .WithRateLimitContext(this.RateLimitCache)
+                .SkipAuthorization(),
             ct: ct
         );
     }
@@ -266,7 +269,10 @@ public class DiscordRestWebhookAPI : AbstractDiscordRestAPI, IDiscordRestWebhook
         return this.RestHttpClient.DeleteAsync
         (
             $"webhooks/{webhookID}/{token}",
-            b => b.AddAuditLogReason(reason).WithRateLimitContext(this.RateLimitCache),
+            b => b
+                .AddAuditLogReason(reason)
+                .WithRateLimitContext(this.RateLimitCache)
+                .SkipAuthorization(),
             ct
         );
     }

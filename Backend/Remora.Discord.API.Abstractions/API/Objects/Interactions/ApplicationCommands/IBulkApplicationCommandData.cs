@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -36,7 +36,10 @@ public interface IBulkApplicationCommandData
     string Name { get; }
 
     /// <inheritdoc cref="IApplicationCommand.Description"/>
-    Optional<string> Description { get; }
+    string Description { get; }
+
+    /// <inheritdoc cref="IApplicationCommand.ID"/>
+    Optional<Snowflake> ID { get; }
 
     /// <inheritdoc cref="IApplicationCommand.Options"/>
     Optional<IReadOnlyList<IApplicationCommandOption>> Options { get; }

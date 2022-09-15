@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -87,6 +87,11 @@ public interface IInteraction
     /// Gets the message the component was attached to.
     /// </summary>
     Optional<IMessage> Message { get; }
+
+    /// <summary>
+    /// Gets the computed permissions for the application in the context of the interaction's execution.
+    /// </summary>
+    Optional<IDiscordPermissionSet> AppPermissions { get; }
 
     /// <summary>
     /// Gets the locale of the invoking user.

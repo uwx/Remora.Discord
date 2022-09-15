@@ -4,7 +4,7 @@
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
 //
-//  Copyright (c) 2017 Jarl Gullberg
+//  Copyright (c) Jarl Gullberg
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Lesser General Public License as published by
@@ -39,7 +39,7 @@ namespace Remora.Discord.Commands.Parsers;
 [PublicAPI]
 public class OneOfParser : AbstractTypeParser
 {
-    private static readonly IReadOnlyList<Type> OneOfTypes = new List<Type>
+    private static readonly IReadOnlyList<Type> _oneOfTypes = new List<Type>
     {
         typeof(OneOf<>),
         typeof(OneOf<,>),
@@ -75,7 +75,7 @@ public class OneOfParser : AbstractTypeParser
         }
 
         var genericType = type.GetGenericTypeDefinition();
-        return OneOfTypes.Contains(genericType);
+        return _oneOfTypes.Contains(genericType);
     }
 
     /// <inheritdoc/>
