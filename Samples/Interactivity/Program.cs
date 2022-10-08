@@ -59,23 +59,10 @@ public class Program
         #endif
 
         var slashService = services.GetRequiredService<SlashService>();
-
-        var checkSlashSupport = slashService.SupportsSlashCommands();
-        if (!checkSlashSupport.IsSuccess)
+        var updateSlash = await slashService.UpdateSlashCommandsAsync(debugServer);
+        if (!updateSlash.IsSuccess)
         {
-            log.LogWarning
-            (
-                "The registered commands of the bot don't support slash commands: {Reason}",
-                checkSlashSupport.Error?.Message
-            );
-        }
-        else
-        {
-            var updateSlash = await slashService.UpdateSlashCommandsAsync(debugServer);
-            if (!updateSlash.IsSuccess)
-            {
-                log.LogWarning("Failed to update slash commands: {Reason}", updateSlash.Error?.Message);
-            }
+            log.LogWarning("Failed to update slash commands: {Reason}", updateSlash.Error.Message);
         }
 
         await host.RunAsync();

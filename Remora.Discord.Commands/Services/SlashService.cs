@@ -88,24 +88,6 @@ public class SlashService
     }
 
     /// <summary>
-    /// Determines whether the application's commands support being bound to Discord slash commands.
-    /// </summary>
-    /// <param name="treeName">The name of the tree to check.</param>
-    /// <returns>true if slash commands are supported; otherwise, false.</returns>
-    public Result SupportsSlashCommands(string? treeName = null)
-    {
-        if (!_commandTreeAccessor.TryGetNamedTree(treeName, out var tree))
-        {
-            return new TreeNotFoundError(treeName);
-        }
-
-        // TODO: Improve
-        // Yes, this is inefficient. Generally, this method is only expected to be called a limited number of times on
-        // startup.
-        return (Result)tree.CreateApplicationCommands(_localizationProvider);
-    }
-
-    /// <summary>
     /// Updates the application's slash commands.
     /// </summary>
     /// <param name="guildID">The ID of the guild to update slash commands in, if any.</param>
@@ -134,11 +116,7 @@ public class SlashService
         }
 
         var application = getApplication.Entity;
-        var createCommands = tree.CreateApplicationCommands(_localizationProvider);
-        if (!createCommands.IsSuccess)
-        {
-            return (Result)createCommands;
-        }
+        var applicationCommands = tree.CreateApplicationCommands(_localizationProvider);
 
         // Upsert the current valid command set
         var updateResult = await
@@ -147,14 +125,14 @@ public class SlashService
                 ? _applicationAPI.BulkOverwriteGlobalApplicationCommandsAsync
                 (
                     application.ID,
-                    createCommands.Entity,
+                    applicationCommands,
                     ct
                 )
                 : _applicationAPI.BulkOverwriteGuildApplicationCommandsAsync
                 (
                     application.ID,
                     guildID.Value,
-                    createCommands.Entity,
+                    applicationCommands,
                     ct
                 )
         );
