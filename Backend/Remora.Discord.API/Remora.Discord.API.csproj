@@ -13,9 +13,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.1" />
         <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
-        <PackageReference Include="System.Text.Json" Version="6.0.5" />
+        <PackageReference Include="System.Text.Json" Version="6.0.6" />
     </ItemGroup>
 
     <ItemGroup>
@@ -66,11 +66,23 @@
       <Compile Update="API\Objects\Interactions\Components\SelectMenu\PartialSelectOption.cs">
         <DependentUpon>SelectOption.cs</DependentUpon>
       </Compile>
-      <Compile Update="API\Objects\Interactions\Components\SelectMenu\PartialSelectMenuComponent.cs">
-        <DependentUpon>SelectMenuComponent.cs</DependentUpon>
+      <Compile Update="API\Objects\Interactions\Components\SelectMenu\PartialStringSelectComponent.cs">
+        <DependentUpon>StringSelectComponent.cs</DependentUpon>
       </Compile>
       <Compile Update="API\Objects\Interactions\Components\TextInput\PartialTextInputComponent.cs">
         <DependentUpon>TextInputComponent.cs</DependentUpon>
+      </Compile>
+      <Compile Update="API\Objects\Interactions\Components\SelectMenu\PartialChannelSelectComponent.cs">
+        <DependentUpon>ChannelSelectComponent.cs</DependentUpon>
+      </Compile>
+      <Compile Update="API\Objects\Interactions\Components\SelectMenu\PartialUserSelectComponent.cs">
+        <DependentUpon>UserSelectComponent.cs</DependentUpon>
+      </Compile>
+      <Compile Update="API\Objects\Interactions\Components\SelectMenu\PartialMentionableSelectComponent.cs">
+        <DependentUpon>MentionableSelectComponent.cs</DependentUpon>
+      </Compile>
+      <Compile Update="API\Objects\Interactions\Components\SelectMenu\PartialRoleSelectComponent.cs">
+        <DependentUpon>RoleSelectComponent.cs</DependentUpon>
       </Compile>
     </ItemGroup>
 

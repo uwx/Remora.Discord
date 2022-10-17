@@ -505,17 +505,11 @@ public class MockedTransportService : IPayloadTransportService
         if (Debugger.IsAttached)
         {
             // Extend the timeout
-            // timeout += TimeSpan.FromMinutes(10);
+            timeout += TimeSpan.FromMinutes(10);
         }
 
         if (DateTimeOffset.UtcNow - _lastAdvance <= timeout)
         {
-            return;
-        }
-
-        if (Environment.GetEnvironmentVariable("CI") is not null)
-        {
-            // Skip timeout tests on CI builds since their scheduling is quite unpredictable.
             return;
         }
 
