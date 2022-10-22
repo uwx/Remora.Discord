@@ -74,9 +74,11 @@ public class CacheTests
 
         var cache = services.GetRequiredService<CacheService>();
 
-        await cache.CacheAsync("dummy", dummyMessage);
+        var dummyKey = CacheKey.StringKey("dummy");
 
-        var result = await cache.TryGetValueAsync<Fixture>("dummy");
+        await cache.CacheAsync(dummyKey, dummyMessage);
+
+        var result = await cache.TryGetValueAsync<Fixture>(dummyKey);
         ResultAssert.Unsuccessful(result);
     }
 
@@ -98,13 +100,16 @@ public class CacheTests
 
         var cache = services.GetRequiredService<CacheService>();
 
-        await cache.CacheAsync("dummy", dummyMessage);
-        await cache.CacheAsync("dummy2", dummyMessage2);
+        var dummyKey = CacheKey.StringKey("dummy");
+        var dummy2Key = CacheKey.StringKey("dummy2");
 
-        var result = await cache.TryGetValueAsync<Fixture>("dummy");
+        await cache.CacheAsync(dummyKey, dummyMessage);
+        await cache.CacheAsync(dummy2Key, dummyMessage2);
+
+        var result = await cache.TryGetValueAsync<Fixture>(dummyKey);
         ResultAssert.Successful(result);
 
-        var result2 = await cache.TryGetValueAsync<Fixture>("dummy2");
+        var result2 = await cache.TryGetValueAsync<Fixture>(dummy2Key);
         ResultAssert.Successful(result);
 
         Assert.Same(dummyMessage, result.Entity);
@@ -128,9 +133,11 @@ public class CacheTests
 
         var cache = services.GetRequiredService<CacheService>();
 
-        await cache.CacheAsync("dummy", dummyMessage);
+        var dummyKey = CacheKey.StringKey("dummy");
 
-        var result = await cache.TryGetValueAsync<Fixture>("dummy");
+        await cache.CacheAsync(dummyKey, dummyMessage);
+
+        var result = await cache.TryGetValueAsync<Fixture>(dummyKey);
         ResultAssert.Successful(result);
 
         Assert.Same(dummyMessage, result.Entity);
@@ -157,9 +164,11 @@ public class CacheTests
 
         var cache = services.GetRequiredService<CacheService>();
 
-        await cache.CacheAsync("dummy", dummyMessage);
+        var dummyKey = CacheKey.StringKey("dummy");
 
-        var result = await cache.TryGetValueAsync<Fixture>("dummy");
+        await cache.CacheAsync(dummyKey, dummyMessage);
+
+        var result = await cache.TryGetValueAsync<Fixture>(dummyKey);
         ResultAssert.Successful(result);
 
         Assert.Same(dummyMessage, result.Entity);
@@ -186,11 +195,13 @@ public class CacheTests
 
         var cache = services.GetRequiredService<CacheService>();
 
-        await cache.CacheAsync("dummy", dummyMessage);
+        var dummyKey = CacheKey.StringKey("dummy");
+
+        await cache.CacheAsync(dummyKey, dummyMessage);
 
         await Task.Delay(1000);
 
-        var result = await cache.TryGetValueAsync<Fixture>("dummy");
+        var result = await cache.TryGetValueAsync<Fixture>(dummyKey);
         ResultAssert.Unsuccessful(result);
     }
 }
