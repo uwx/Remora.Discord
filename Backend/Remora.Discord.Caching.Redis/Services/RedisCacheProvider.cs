@@ -111,7 +111,7 @@ public class RedisCacheProvider : ICacheProvider
         return deserialized;
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc cref="ICacheProvider.EvictAsync"/>
     public async ValueTask<Result> EvictAsync(CacheKey key, CancellationToken ct = default)
     {
         var keyString = key.ToCanonicalString();
