@@ -21,12 +21,14 @@
 //
 
 using System.Text;
+using JetBrains.Annotations;
 
-namespace Remora.Discord.Caching;
+namespace Remora.Discord.Caching.Abstractions;
 
 /// <summary>
 /// The base type for a cache key.
 /// </summary>
+[PublicAPI]
 public abstract record CacheKey
 {
     /// <summary>
@@ -45,7 +47,7 @@ public abstract record CacheKey
         return AppendToString(new StringBuilder()).ToString();
     }
 
-    private record StringCacheKey(string KeyString) : CacheKey
+    private sealed record StringCacheKey(string KeyString) : CacheKey
     {
         // We provide an implementation here to avoid the StringBuilder call when the key only contains a simple string.
         public override string ToCanonicalString()
@@ -55,7 +57,7 @@ public abstract record CacheKey
             => stringBuilder.Append(this.KeyString);
     }
 
-    private record ResourceCacheKey(string Context, string KeyString) : CacheKey
+    private sealed record ResourceCacheKey(string Context, string KeyString) : CacheKey
     {
         // We provide an implementation here to avoid the StringBuilder call when the key only contains a simple string
         // concatenation.

@@ -1,5 +1,5 @@
 //
-//  ResultAssert.cs
+//  MultipleCommandsWithNsfwOnCommand.cs
 //
 //  Author:
 //       Jarl Gullberg <jarl.gullberg@gmail.com>
@@ -20,37 +20,45 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+using System;
+using System.Threading.Tasks;
+using Remora.Commands.Attributes;
+using Remora.Commands.Groups;
+using Remora.Discord.Commands.Attributes;
 using Remora.Results;
-using Xunit;
 
-namespace Remora.Discord.Tests;
+namespace Remora.Discord.Commands.Tests.Data.Valid;
 
 /// <summary>
-/// Contains helper assertions for results.
+/// Wraps two test groups.
 /// </summary>
-public static class ResultAssert
+public class MultipleCommandsWithNsfwOnCommand
 {
     /// <summary>
-    /// Asserts that the given result is successful.
+    /// The first group.
     /// </summary>
-    /// <typeparam name="TResult">The result type to inspect.</typeparam>
-    /// <param name="result">The result.</param>
-    public static void Successful<TResult>(TResult result) where TResult : struct, IResult
+    public class GroupOne : CommandGroup
     {
-        Assert.True
-        (
-            result.IsSuccess,
-            result.IsSuccess ? string.Empty : result.Error?.Message ?? "Unknown error."
-        );
+        /// <summary>
+        /// The first command.
+        /// </summary>
+        /// <returns>Nothing.</returns>
+        [Command("a")]
+        [DiscordNsfw]
+        public Task<Result> A() => throw new NotImplementedException();
     }
 
     /// <summary>
-    /// Asserts that a given result is unsuccessful.
+    /// The second group.
     /// </summary>
-    /// <typeparam name="TResult">The result type to inspect.</typeparam>
-    /// <param name="result">The result.</param>
-    public static void Unsuccessful<TResult>(TResult result) where TResult : struct, IResult
+    public class GroupTwo : CommandGroup
     {
-        Assert.False(result.IsSuccess, "The result was successful.");
+        /// <summary>
+        /// The second command.
+        /// </summary>
+        /// <returns>Nothing.</returns>
+        [Command("b")]
+        [DiscordNsfw(false)]
+        public Task<Result> B() => throw new NotImplementedException();
     }
 }

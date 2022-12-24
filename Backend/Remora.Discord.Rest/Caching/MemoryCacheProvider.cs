@@ -20,12 +20,10 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Caching.Memory;
-using Remora.Discord.Caching;
 using Remora.Discord.Caching.Abstractions;
 using Remora.Discord.Caching.Abstractions.Services;
 using Remora.Results;
@@ -76,7 +74,7 @@ public class MemoryCacheProvider : ICacheProvider
         return new(new NotFoundError($"The key \"{key}\" did not contain a value in cache."));
     }
 
-    /// <inheritdoc cref="ICacheProvider.EvictAsync"/>
+    /// <inheritdoc cref="ICacheProvider.EvictAsync" />
     public ValueTask<Result> EvictAsync(CacheKey key, CancellationToken ct = default)
     {
         if (!_memoryCache.TryGetValue(key, out _))

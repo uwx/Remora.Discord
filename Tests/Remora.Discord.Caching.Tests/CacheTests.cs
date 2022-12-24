@@ -22,9 +22,10 @@
 
 using System;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using Remora.Discord.API.Abstractions.Objects;
+using Remora.Discord.Caching.Abstractions;
 using Remora.Discord.Caching.Extensions;
 using Remora.Discord.Caching.Services;
 using Remora.Discord.Rest;
@@ -35,13 +36,14 @@ using Xunit;
 namespace Remora.Discord.Caching.Tests;
 
 /// <summary>
-/// Tests injection of various command contexts.
+/// Tests the functionality of the default in-memory cache.
 /// </summary>
 public class CacheTests
 {
     /// <summary>
     /// A test fixture for caching.
     /// </summary>
+    [UsedImplicitly(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
     public class Fixture
     {
     }
@@ -54,7 +56,23 @@ public class CacheTests
     }
 
     /// <summary>
-    /// Tests whether a command in a group that requires an <see cref="ICommandContext"/> can be executed.
+    /// Creates and configures the basic caching services.
+    /// </summary>
+    /// <param name="configureSettings">
+    /// An optional function to configure the <see cref="CacheSettings"/> instance.
+    /// </param>
+    /// <returns>A newly created <see cref="IServiceProvider"/> with Discord caching services enabled.</returns>
+    private static ServiceProvider CreateServices(Action<CacheSettings>? configureSettings = null)
+    {
+        return new ServiceCollection()
+            .AddDiscordRest(_ => ("dummy", DiscordTokenType.Bot))
+            .AddDiscordCaching()
+            .Configure<CacheSettings>(settings => configureSettings?.Invoke(settings))
+            .BuildServiceProvider(validateScopes: true);
+    }
+
+    /// <summary>
+    /// Tests whether a cache entry with an absolute expiration value of <see cref="TimeSpan.Zero"/> is never cached.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
@@ -62,28 +80,24 @@ public class CacheTests
     {
         var dummyMessage = new Mock<Fixture>().Object;
 
-        var services = new ServiceCollection()
-            .AddDiscordRest(_ => ("dummy", DiscordTokenType.Bot))
-            .AddDiscordCaching()
-            .Configure<CacheSettings>(settings =>
+        var services = CreateServices(settings =>
             {
                 settings.SetAbsoluteExpiration<Fixture>(TimeSpan.Zero);
             })
-            .BuildServiceProvider(true)
             .CreateScope().ServiceProvider;
 
         var cache = services.GetRequiredService<CacheService>();
 
-        var dummyKey = CacheKey.StringKey("dummy");
+        var key = CacheKey.StringKey("dummy");
 
-        await cache.CacheAsync(dummyKey, dummyMessage);
+        await cache.CacheAsync(key, dummyMessage);
 
-        var result = await cache.TryGetValueAsync<Fixture>(dummyKey);
+        var result = await cache.TryGetValueAsync<Fixture>(key);
         ResultAssert.Unsuccessful(result);
     }
 
     /// <summary>
-    /// Tests whether a command in a group that requires an <see cref="ICommandContext"/> can be executed.
+    /// Tests whether the caching system can store and retrieve multiple cache entries with different keys separately.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
@@ -92,24 +106,20 @@ public class CacheTests
         var dummyMessage = new Mock<Fixture>().Object;
         var dummyMessage2 = new Mock<Fixture>().Object;
 
-        var services = new ServiceCollection()
-            .AddDiscordRest(_ => ("dummy", DiscordTokenType.Bot))
-            .AddDiscordCaching()
-            .BuildServiceProvider(true)
-            .CreateScope().ServiceProvider;
+        var services = CreateServices().CreateScope().ServiceProvider;
 
         var cache = services.GetRequiredService<CacheService>();
 
-        var dummyKey = CacheKey.StringKey("dummy");
-        var dummy2Key = CacheKey.StringKey("dummy2");
+        var key = CacheKey.StringKey("dummy");
+        var key2 = CacheKey.StringKey("dummy2");
 
-        await cache.CacheAsync(dummyKey, dummyMessage);
-        await cache.CacheAsync(dummy2Key, dummyMessage2);
+        await cache.CacheAsync(key, dummyMessage);
+        await cache.CacheAsync(key2, dummyMessage2);
 
-        var result = await cache.TryGetValueAsync<Fixture>(dummyKey);
+        var result = await cache.TryGetValueAsync<Fixture>(key);
         ResultAssert.Successful(result);
 
-        var result2 = await cache.TryGetValueAsync<Fixture>(dummy2Key);
+        var result2 = await cache.TryGetValueAsync<Fixture>(key2);
         ResultAssert.Successful(result);
 
         Assert.Same(dummyMessage, result.Entity);
@@ -117,7 +127,7 @@ public class CacheTests
     }
 
     /// <summary>
-    /// Tests whether a command in a group that requires an <see cref="ICommandContext"/> can be executed.
+    /// Tests whether the caching system produces the same value that was inserted into it.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
@@ -125,26 +135,22 @@ public class CacheTests
     {
         var dummyMessage = new Mock<Fixture>().Object;
 
-        var services = new ServiceCollection()
-            .AddDiscordRest(_ => ("dummy", DiscordTokenType.Bot))
-            .AddDiscordCaching()
-            .BuildServiceProvider(true)
-            .CreateScope().ServiceProvider;
+        var services = CreateServices().CreateScope().ServiceProvider;
 
         var cache = services.GetRequiredService<CacheService>();
 
-        var dummyKey = CacheKey.StringKey("dummy");
+        var key = CacheKey.StringKey("dummy");
 
-        await cache.CacheAsync(dummyKey, dummyMessage);
+        await cache.CacheAsync(key, dummyMessage);
 
-        var result = await cache.TryGetValueAsync<Fixture>(dummyKey);
+        var result = await cache.TryGetValueAsync<Fixture>(key);
         ResultAssert.Successful(result);
 
         Assert.Same(dummyMessage, result.Entity);
     }
 
     /// <summary>
-    /// Tests whether a command in a group that requires an <see cref="ICommandContext"/> can be executed.
+    /// Tests whether a cached value does not expire before the specified timeout.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
@@ -152,30 +158,26 @@ public class CacheTests
     {
         var dummyMessage = new Mock<Fixture>().Object;
 
-        var services = new ServiceCollection()
-            .AddDiscordRest(_ => ("dummy", DiscordTokenType.Bot))
-            .AddDiscordCaching()
-            .Configure<CacheSettings>(settings =>
+        var services = CreateServices(settings =>
             {
                 settings.SetAbsoluteExpiration<Fixture>(TimeSpan.FromMilliseconds(500));
             })
-            .BuildServiceProvider(true)
             .CreateScope().ServiceProvider;
 
         var cache = services.GetRequiredService<CacheService>();
 
-        var dummyKey = CacheKey.StringKey("dummy");
+        var key = CacheKey.StringKey("dummy");
 
-        await cache.CacheAsync(dummyKey, dummyMessage);
+        await cache.CacheAsync(key, dummyMessage);
 
-        var result = await cache.TryGetValueAsync<Fixture>(dummyKey);
+        var result = await cache.TryGetValueAsync<Fixture>(key);
         ResultAssert.Successful(result);
 
         Assert.Same(dummyMessage, result.Entity);
     }
 
     /// <summary>
-    /// Tests whether a command in a group that requires an <see cref="ICommandContext"/> can be executed.
+    /// Tests whether a cached value expires after the specified timeout.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
@@ -183,25 +185,21 @@ public class CacheTests
     {
         var dummyMessage = new Mock<Fixture>().Object;
 
-        var services = new ServiceCollection()
-            .AddDiscordRest(_ => ("dummy", DiscordTokenType.Bot))
-            .AddDiscordCaching()
-            .Configure<CacheSettings>(settings =>
+        var services = CreateServices(settings =>
             {
                 settings.SetAbsoluteExpiration<Fixture>(TimeSpan.FromMilliseconds(500));
             })
-            .BuildServiceProvider(true)
             .CreateScope().ServiceProvider;
 
         var cache = services.GetRequiredService<CacheService>();
 
-        var dummyKey = CacheKey.StringKey("dummy");
+        var key = CacheKey.StringKey("dummy");
 
-        await cache.CacheAsync(dummyKey, dummyMessage);
+        await cache.CacheAsync(key, dummyMessage);
 
         await Task.Delay(1000);
 
-        var result = await cache.TryGetValueAsync<Fixture>(dummyKey);
+        var result = await cache.TryGetValueAsync<Fixture>(key);
         ResultAssert.Unsuccessful(result);
     }
 }
