@@ -5,7 +5,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\Remora.Rest\Tests\Remora.Rest.Xunit.Tests\Remora.Rest.Xunit.csproj" />
+      <ProjectReference Include="..\..\..\Remora.Rest\Remora.Rest.Xunit\Remora.Rest.Xunit.csproj" />
+      <ProjectReference Include="..\..\Backend\Remora.Discord.API.Abstractions\Remora.Discord.API.Abstractions.csproj" />
       <ProjectReference Include="..\..\Backend\Remora.Discord.Rest\Remora.Discord.Rest.csproj" />
       <ProjectReference Include="..\..\Backend\Remora.Discord.Unstable\Remora.Discord.Unstable.csproj" />
       <ProjectReference Include="..\Remora.Discord.Tests\Remora.Discord.Tests.csproj" />
