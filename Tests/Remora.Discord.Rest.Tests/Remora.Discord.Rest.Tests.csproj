@@ -2,10 +2,10 @@
 
     <ItemGroup>
         <PackageReference Include="RichardSzalay.MockHttp" />
-        <PackageReference Include="Remora.Rest.Xunit" />
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\..\Remora.Rest\Tests\Remora.Rest.Xunit.Tests\Remora.Rest.Xunit.csproj" />
       <ProjectReference Include="..\..\Backend\Remora.Discord.Rest\Remora.Discord.Rest.csproj" />
       <ProjectReference Include="..\..\Backend\Remora.Discord.Unstable\Remora.Discord.Unstable.csproj" />
       <ProjectReference Include="..\Remora.Discord.Tests\Remora.Discord.Tests.csproj" />
