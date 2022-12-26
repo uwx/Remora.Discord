@@ -41,6 +41,7 @@ using Remora.Discord.API.VoiceGateway.Events;
 using Remora.Rest.Extensions;
 using Remora.Rest.Json;
 using Remora.Rest.Json.Policies;
+using ClientStatus = Remora.Discord.API.Objects.ClientStatus;
 
 namespace Remora.Discord.API.Extensions;
 
@@ -146,7 +147,7 @@ public static class ServiceCollectionExtensions
     {
         options.AddDataObjectConverter<IIdentify, Identify>();
 
-        options.AddDataObjectConverter<IConnectionProperties, ConnectionProperties>()
+        options.AddDataObjectConverter<IIdentifyConnectionProperties, IdentifyConnectionProperties>()
             .WithPropertyName(p => p.OperatingSystem, "os")
             .WithPropertyName(p => p.Browser, "browser")
             .WithPropertyName(p => p.Device, "device");
@@ -164,7 +165,7 @@ public static class ServiceCollectionExtensions
             .WithPropertyConverter
             (
                 u => u.Status,
-                new StringEnumConverter<ClientStatus>(new SnakeCaseNamingPolicy())
+                new StringEnumConverter<UserStatus>(new SnakeCaseNamingPolicy())
             )
             .WithPropertyConverter(u => u.Since, new UnixMillisecondsDateTimeOffsetConverter());
 
@@ -227,15 +228,18 @@ public static class ServiceCollectionExtensions
         options.AddDataObjectConverter<IThreadCreate, ThreadCreate>()
             .WithPropertyName(c => c.IsNewlyCreated, "newly_created")
             .WithPropertyName(c => c.IsNsfw, "nsfw")
-            .WithPropertyConverter(c => c.RateLimitPerUser, new UnitTimeSpanConverter(TimeUnit.Seconds));
+            .WithPropertyConverter(c => c.RateLimitPerUser, new UnitTimeSpanConverter(TimeUnit.Seconds))
+            .WithPropertyConverter(c => c.DefaultThreadRateLimitPerUser, new UnitTimeSpanConverter(TimeUnit.Seconds));
 
         options.AddDataObjectConverter<IThreadUpdate, ThreadUpdate>()
             .WithPropertyName(c => c.IsNsfw, "nsfw")
-            .WithPropertyConverter(c => c.RateLimitPerUser, new UnitTimeSpanConverter(TimeUnit.Seconds));
+            .WithPropertyConverter(c => c.RateLimitPerUser, new UnitTimeSpanConverter(TimeUnit.Seconds))
+            .WithPropertyConverter(c => c.DefaultThreadRateLimitPerUser, new UnitTimeSpanConverter(TimeUnit.Seconds));
 
         options.AddDataObjectConverter<IThreadDelete, ThreadDelete>()
             .WithPropertyName(c => c.IsNsfw, "nsfw")
-            .WithPropertyConverter(c => c.RateLimitPerUser, new UnitTimeSpanConverter(TimeUnit.Seconds));
+            .WithPropertyConverter(c => c.RateLimitPerUser, new UnitTimeSpanConverter(TimeUnit.Seconds))
+            .WithPropertyConverter(c => c.DefaultThreadRateLimitPerUser, new UnitTimeSpanConverter(TimeUnit.Seconds));
 
         options.AddDataObjectConverter<IThreadListSync, ThreadListSync>()
             .WithPropertyName(t => t.ChannelIDs, "channel_ids");
@@ -255,7 +259,8 @@ public static class ServiceCollectionExtensions
             .WithPropertyName(i => i.IsDiscoveryDisabled, "discoverable_disabled");
 
         // Guilds
-        options.AddDataObjectConverter<IGuildCreate, GuildCreate>()
+        options.AddConverter<GuildCreateConverter>();
+        options.AddDataObjectConverter<IGuildCreate.IAvailableGuild, GuildCreate.AvailableGuild>()
             .WithPropertyName(g => g.IsOwner, "owner")
             .WithPropertyName(g => g.GuildFeatures, "features")
             .WithPropertyConverter
@@ -347,7 +352,7 @@ public static class ServiceCollectionExtensions
 
         // Presences
         options.AddDataObjectConverter<IPresenceUpdate, PresenceUpdate>()
-            .WithPropertyConverter(p => p.Status, new StringEnumConverter<ClientStatus>(new SnakeCaseNamingPolicy()));
+            .WithPropertyConverter(p => p.Status, new StringEnumConverter<UserStatus>(new SnakeCaseNamingPolicy()));
 
         // Users
         options.AddDataObjectConverter<ITypingStart, TypingStart>()
@@ -540,6 +545,7 @@ public static class ServiceCollectionExtensions
 
         options.AddDataObjectConverter<IThreadMetadata, ThreadMetadata>()
             .WithPropertyName(m => m.IsArchived, "archived")
+            .WithPropertyName(m => m.IsInvitable, "invitable")
             .WithPropertyName(m => m.IsLocked, "locked");
 
         options.AddDataObjectConverter<IThreadMember, ThreadMember>();
@@ -811,16 +817,16 @@ public static class ServiceCollectionExtensions
     {
         var snakeCase = new SnakeCaseNamingPolicy();
 
-        options.AddDataObjectConverter<IClientStatuses, ClientStatuses>()
-            .WithPropertyConverter(p => p.Desktop, new StringEnumConverter<ClientStatus>(snakeCase))
-            .WithPropertyConverter(p => p.Mobile, new StringEnumConverter<ClientStatus>(snakeCase))
-            .WithPropertyConverter(p => p.Web, new StringEnumConverter<ClientStatus>(snakeCase));
+        options.AddDataObjectConverter<IClientStatus, ClientStatus>()
+            .WithPropertyConverter(p => p.Desktop, new StringEnumConverter<UserStatus>(snakeCase))
+            .WithPropertyConverter(p => p.Mobile, new StringEnumConverter<UserStatus>(snakeCase))
+            .WithPropertyConverter(p => p.Web, new StringEnumConverter<UserStatus>(snakeCase));
 
         options.AddDataObjectConverter<IPresence, Presence>()
-            .WithPropertyConverter(p => p.Status, new StringEnumConverter<ClientStatus>(snakeCase));
+            .WithPropertyConverter(p => p.Status, new StringEnumConverter<UserStatus>(snakeCase));
 
         options.AddDataObjectConverter<IPartialPresence, PartialPresence>()
-            .WithPropertyConverter(p => p.Status, new StringEnumConverter<ClientStatus>(snakeCase));
+            .WithPropertyConverter(p => p.Status, new StringEnumConverter<UserStatus>(snakeCase));
 
         return options;
     }
@@ -873,6 +879,7 @@ public static class ServiceCollectionExtensions
             .WithPropertyName(c => c.IsRevoked, "revoked")
             .WithPropertyName(c => c.IsVerified, "verified")
             .WithPropertyName(c => c.IsFriendSyncEnabled, "friend_sync")
+            .WithPropertyName(c => c.IsTwoWayLink, "two_way_link")
             .WithPropertyName(c => c.ShouldShowActivity, "show_activity");
 
         return options;

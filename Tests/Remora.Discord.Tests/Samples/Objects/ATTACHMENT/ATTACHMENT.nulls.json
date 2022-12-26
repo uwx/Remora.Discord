@@ -1,0 +1,12 @@
+{
+  "id": "999999999999999999",
+  "filename": "none",
+  "description": "none",
+  "content_type": "none",
+  "size": 0,
+  "url": "https://www.example.org",
+  "proxy_url": "https://www.example.org",
+  "height": null,
+  "width": null,
+  "ephemeral": true
+}
